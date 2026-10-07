@@ -57,6 +57,25 @@ $stmt->execute([$service['id']]);
 
 $faqs = $stmt->fetchAll();
 
+/*
+|--------------------------------------------------------------------------
+| Load Active Service Images
+|--------------------------------------------------------------------------
+*/
+
+$imageStmt = $pdo->prepare("
+    SELECT *
+    FROM service_images
+    WHERE service_id = ?
+    AND status = 1
+    ORDER BY sort_order ASC, id ASC
+");
+
+$imageStmt->execute([
+    $service['id']
+]);
+
+$service_images = $imageStmt->fetchAll();
 
 require_once "includes/header.php";
 
@@ -119,6 +138,42 @@ require_once "includes/header.php";
 
                 <?php endif; ?>
 
+                <?php if (!empty($service_images)): ?>
+
+    <div class="service-gallery">
+
+        <h3>Gallery</h3>
+
+        <div class="service-gallery-grid">
+
+            <?php foreach ($service_images as $image): ?>
+
+                <div class="service-gallery-item">
+
+                    <img
+                        src="<?php echo htmlspecialchars($image['image_path']); ?>"
+                        alt="<?php echo htmlspecialchars(
+                            $image['image_title'] ?: $service['service_name']
+                        ); ?>"
+                    >
+
+                    <?php if (!empty($image['image_title'])): ?>
+
+                        <div class="service-gallery-title">
+                            <?php echo htmlspecialchars($image['image_title']); ?>
+                        </div>
+
+                    <?php endif; ?>
+
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+
+    </div>
+
+<?php endif; ?>
             </div>
 
 
@@ -314,3 +369,5 @@ require_once "includes/header.php";
 require_once "includes/footer.php";
 
 ?>
+
+

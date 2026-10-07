@@ -417,7 +417,9 @@ foreach ($images as $image) {
 
                             <th>Status</th>
 
-                            <th>Created</th>
+<th>Created</th>
+
+<th>Actions</th>
 
                         </tr>
 
@@ -520,6 +522,42 @@ foreach ($images as $image) {
                                 ?>
 
                             </td>
+
+                            <td>
+
+    <a
+        href="service-image-edit.php?id=<?php echo (int)$image['id']; ?>"
+        style="
+            display:inline-block;
+            padding:7px 12px;
+            background:#2563eb;
+            color:#fff;
+            text-decoration:none;
+            border-radius:5px;
+            font-size:12px;
+        "
+    >
+        Edit
+    </a>
+
+    <a
+    href="service-image-delete.php?id=<?php echo (int)$image['id']; ?>"
+    onclick="return confirm('Are you sure you want to delete this image?');"
+    style="
+        display:inline-block;
+        padding:7px 12px;
+        background:#dc2626;
+        color:#fff;
+        text-decoration:none;
+        border-radius:5px;
+        font-size:12px;
+        margin-left:5px;
+    "
+>
+    Delete
+</a>
+
+</td>
 
                         </tr>
 
