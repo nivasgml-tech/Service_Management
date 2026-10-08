@@ -2,9 +2,9 @@
 
 require_once "config/database.php";
 
-$slug = $_GET['slug'] ?? '';
+$slug = trim($_GET['slug'] ?? '');
 
-if ($slug == '') {
+if ($slug === '') {
     die("Invalid service.");
 }
 
@@ -57,11 +57,8 @@ $stmt->execute([$service['id']]);
 
 $faqs = $stmt->fetchAll();
 
-/*
-|--------------------------------------------------------------------------
-| Load Active Service Images
-|--------------------------------------------------------------------------
-*/
+
+/* GET ACTIVE SERVICE IMAGES */
 
 $imageStmt = $pdo->prepare("
     SELECT *
@@ -71,17 +68,60 @@ $imageStmt = $pdo->prepare("
     ORDER BY sort_order ASC, id ASC
 ");
 
-$imageStmt->execute([
-    $service['id']
-]);
+$imageStmt->execute([$service['id']]);
 
 $service_images = $imageStmt->fetchAll();
+
+
+/*
+|--------------------------------------------------------------------------
+| MAIN IMAGE
+|--------------------------------------------------------------------------
+| Use the service main_image when it is valid.
+| If it is empty or the local file no longer exists, use the first
+| active gallery image as the main image.
+|--------------------------------------------------------------------------
+*/
+
+$main_image = trim($service['main_image'] ?? '');
+
+if ($main_image !== '') {
+
+    /* Keep remote URLs as they are. */
+
+    $is_remote_image = preg_match(
+        '/^(https?:)?\\/\\//i',
+        $main_image
+    );
+
+    if (!$is_remote_image) {
+
+        $main_image_file = __DIR__ . '/' . ltrim(
+            $main_image,
+            '/'
+        );
+
+        if (!is_file($main_image_file)) {
+            $main_image = '';
+        }
+    }
+}
+
+
+/* FALLBACK TO FIRST GALLERY IMAGE */
+
+if ($main_image === '' && !empty($service_images)) {
+    $main_image = $service_images[0]['image_path'];
+}
+
 
 require_once "includes/header.php";
 
 ?>
 
-<!-- SERVICE HERO -->
+<!-- =========================================================
+     SERVICE HERO
+========================================================= -->
 
 <section class="service-detail-hero">
 
@@ -95,20 +135,34 @@ require_once "includes/header.php";
             <?php echo htmlspecialchars($service['service_name']); ?>
         </h1>
 
-        <p>
-            <?php echo htmlspecialchars($service['short_description']); ?>
-        </p>
+        <?php if (!empty($service['short_description'])): ?>
+
+            <p>
+                <?php
+                echo nl2br(
+                    htmlspecialchars(
+                        $service['short_description']
+                    )
+                );
+                ?>
+            </p>
+
+        <?php endif; ?>
 
     </div>
 
 </section>
 
 
-<!-- SERVICE CONTENT -->
+<!-- =========================================================
+     SERVICE CONTENT
+========================================================= -->
 
 <section class="service-detail-section">
 
     <div class="container">
+
+        <!-- TOP TWO-COLUMN SECTION ONLY -->
 
         <div class="service-detail-grid">
 
@@ -117,10 +171,10 @@ require_once "includes/header.php";
 
             <div class="service-detail-image">
 
-                <?php if (!empty($service['main_image'])): ?>
+                <?php if ($main_image !== ''): ?>
 
                     <img
-                        src="<?php echo htmlspecialchars($service['main_image']); ?>"
+                        src="<?php echo htmlspecialchars($main_image); ?>"
                         alt="<?php echo htmlspecialchars($service['service_name']); ?>"
                     >
 
@@ -138,47 +192,7 @@ require_once "includes/header.php";
 
                 <?php endif; ?>
 
-       <?php if (!empty($service_images)): ?>
-
-<div class="service-gallery">
-
-    <h3>Gallery</h3>
-
-    <div class="service-gallery-grid">
-
-        <?php foreach ($service_images as $image): ?>
-
-            <div class="service-gallery-item">
-
-                <img
-                    src="<?php echo htmlspecialchars($image['image_path']); ?>"
-                    alt="<?php echo htmlspecialchars(
-                        $image['image_title'] ?: $service['service_name']
-                    ); ?>"
-                >
-
-                <?php if (!empty($image['image_title'])): ?>
-
-                    <div class="service-gallery-title">
-                        <?php
-                        echo htmlspecialchars(
-                            $image['image_title']
-                        );
-                        ?>
-                    </div>
-
-                <?php endif; ?>
-
             </div>
-
-        <?php endforeach; ?>
-
-    </div>
-
-</div>
-
-<?php endif; ?>
-     </div>
 
 
             <!-- CONTENT -->
@@ -190,27 +204,29 @@ require_once "includes/header.php";
                 </span>
 
                 <h2>
-
                     <?php
                     echo htmlspecialchars(
                         $service['service_name']
                     );
                     ?>
-
                 </h2>
 
 
-                <div class="service-description">
+                <?php if (!empty($service['description'])): ?>
 
-                    <?php
-                    echo nl2br(
-                        htmlspecialchars(
-                            $service['description']
-                        )
-                    );
-                    ?>
+                    <div class="service-description">
 
-                </div>
+                        <?php
+                        echo nl2br(
+                            htmlspecialchars(
+                                $service['description']
+                            )
+                        );
+                        ?>
+
+                    </div>
+
+                <?php endif; ?>
 
 
                 <?php if (!empty($service['video_url'])): ?>
@@ -218,6 +234,7 @@ require_once "includes/header.php";
                     <a
                         href="<?php echo htmlspecialchars($service['video_url']); ?>"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="btn btn-primary"
                     >
                         Watch Video
@@ -230,7 +247,72 @@ require_once "includes/header.php";
         </div>
 
 
-        <!-- FEATURES -->
+        <!-- =====================================================
+             GALLERY - OUTSIDE THE TWO-COLUMN GRID
+        ====================================================== -->
+
+        <?php if (!empty($service_images)): ?>
+
+            <div class="service-gallery">
+
+                <div class="section-heading">
+
+                    <span>
+                        PROJECT GALLERY
+                    </span>
+
+                    <h2>
+                        Gallery
+                    </h2>
+
+                    <p>
+                        Explore images related to this service.
+                    </p>
+
+                </div>
+
+
+                <div class="service-gallery-grid">
+
+                    <?php foreach ($service_images as $image): ?>
+
+                        <div class="service-gallery-item">
+
+                            <img
+                                src="<?php echo htmlspecialchars($image['image_path']); ?>"
+                                alt="<?php echo htmlspecialchars(
+                                    $image['image_title'] ?: $service['service_name']
+                                ); ?>"
+                            >
+
+                            <?php if (!empty($image['image_title'])): ?>
+
+                                <div class="service-gallery-title">
+
+                                    <?php
+                                    echo htmlspecialchars(
+                                        $image['image_title']
+                                    );
+                                    ?>
+
+                                </div>
+
+                            <?php endif; ?>
+
+                        </div>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+            </div>
+
+        <?php endif; ?>
+
+
+        <!-- =====================================================
+             FEATURES
+        ====================================================== -->
 
         <?php if (count($features) > 0): ?>
 
@@ -238,7 +320,9 @@ require_once "includes/header.php";
 
                 <div class="section-heading">
 
-                    <span>WHY CHOOSE THIS SERVICE</span>
+                    <span>
+                        WHY CHOOSE THIS SERVICE
+                    </span>
 
                     <h2>
                         What We Offer
@@ -276,7 +360,9 @@ require_once "includes/header.php";
         <?php endif; ?>
 
 
-        <!-- FAQ -->
+        <!-- =====================================================
+             FAQ
+        ====================================================== -->
 
         <?php if (count($faqs) > 0): ?>
 
@@ -284,7 +370,9 @@ require_once "includes/header.php";
 
                 <div class="section-heading">
 
-                    <span>FAQ</span>
+                    <span>
+                        FAQ
+                    </span>
 
                     <h2>
                         Frequently Asked Questions
@@ -328,7 +416,9 @@ require_once "includes/header.php";
         <?php endif; ?>
 
 
-        <!-- ENQUIRY -->
+        <!-- =====================================================
+             ENQUIRY CTA
+        ====================================================== -->
 
         <div class="service-enquiry" id="enquiry">
 
@@ -373,5 +463,3 @@ require_once "includes/header.php";
 require_once "includes/footer.php";
 
 ?>
-
-

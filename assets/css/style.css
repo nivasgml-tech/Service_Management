@@ -1239,28 +1239,34 @@ a {
 
 }
 
-/* Service Gallery */
+/* =========================================
+   SERVICE GALLERY - FULL WIDTH
+========================================= */
+
 .service-gallery {
     width: 100%;
-    margin-top: 50px;
+    margin-top: 100px;
 }
 
 .service-gallery h3 {
-    margin: 0 0 20px;
-    font-size: 26px;
+    margin: 0 0 30px;
+    font-size: 42px;
+    line-height: 1.15;
+    color: #172033;
 }
 
 .service-gallery-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    gap: 25px;
     width: 100%;
 }
 
 .service-gallery-item {
     width: 100%;
-    background: #fff;
-    border: 1px solid #e5e7eb;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e3e8ed;
     border-radius: 12px;
     overflow: hidden;
 }
@@ -1268,7 +1274,7 @@ a {
 .service-gallery-item img {
     display: block;
     width: 100%;
-    height: 260px;
+    height: 280px;
     object-fit: cover;
 }
 
@@ -1276,6 +1282,8 @@ a {
     padding: 12px 15px;
     font-size: 14px;
     font-weight: 600;
+    color: #263746;
+    background: #ffffff;
 }
 
 @media (max-width: 900px) {
@@ -1288,12 +1296,537 @@ a {
 
 @media (max-width: 600px) {
 
+    .service-gallery {
+        margin-top: 70px;
+    }
+
+    .service-gallery h3 {
+        font-size: 34px;
+    }
+
     .service-gallery-grid {
         grid-template-columns: 1fr;
     }
 
     .service-gallery-item img {
-        height: 240px;
+        height: 260px;
     }
 
 }
+
+/* =========================================================
+   PUBLIC SERVICES PAGE
+========================================================= */
+
+.services-hero {
+    padding: 75px 0;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.services-hero-content {
+    max-width: 750px;
+}
+
+.services-hero h1 {
+    margin: 0 0 18px;
+    color: #172554;
+    font-size: 44px;
+    line-height: 1.2;
+}
+
+.services-hero p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+.services-list-section {
+    padding: 70px 0;
+    background: #ffffff;
+}
+
+.public-services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 25px;
+}
+
+.public-service-card {
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.public-service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+.public-service-image {
+    width: 100%;
+    height: 240px;
+    background: #f3f4f6;
+    overflow: hidden;
+}
+
+.public-service-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.public-service-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.public-service-content {
+    padding: 22px;
+}
+
+.public-service-content h2 {
+    margin: 0 0 12px;
+    color: #172554;
+    font-size: 22px;
+    line-height: 1.3;
+}
+
+.public-service-content p {
+    margin: 0;
+    min-height: 72px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.public-service-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+
+.service-view-btn,
+.service-consult-btn {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.service-view-btn {
+    background: #172554;
+    color: #ffffff;
+}
+
+.service-view-btn:hover {
+    background: #111827;
+}
+
+.service-consult-btn {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.service-consult-btn:hover {
+    background: #1d4ed8;
+}
+
+.services-empty {
+    padding: 70px 20px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.services-empty h2 {
+    margin: 0 0 10px;
+    color: #172554;
+}
+
+.services-empty p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.services-final-cta {
+    padding: 60px 0;
+    background: #172554;
+}
+
+.services-final-cta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.services-final-cta .section-eyebrow {
+    color: #fbbf24;
+}
+
+.services-final-cta h2 {
+    margin: 0 0 10px;
+    color: #ffffff;
+    font-size: 30px;
+    line-height: 1.3;
+}
+
+.services-final-cta p {
+    margin: 0;
+    color: #dbeafe;
+    font-size: 15px;
+}
+
+.services-cta-button {
+    display: inline-block;
+    padding: 13px 22px;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #172554;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   PUBLIC SERVICES PAGE - TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .public-services-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .services-hero h1 {
+        font-size: 38px;
+    }
+
+}
+
+
+/* =========================================================
+   PUBLIC SERVICES PAGE - MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .services-hero {
+        padding: 50px 0;
+    }
+
+    .services-hero h1 {
+        font-size: 32px;
+    }
+
+    .services-hero p {
+        font-size: 15px;
+    }
+
+    .services-list-section {
+        padding: 45px 0;
+    }
+
+    .public-services-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .public-service-image {
+        height: 230px;
+    }
+
+    .public-service-content {
+        padding: 20px;
+    }
+
+    .public-service-actions {
+        flex-direction: column;
+    }
+
+    .service-view-btn,
+    .service-consult-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .services-final-cta-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+}
+
+/* =========================================================
+   PUBLIC SERVICES PAGE
+========================================================= */
+
+.services-hero {
+    padding: 75px 0;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.services-hero-content {
+    max-width: 750px;
+}
+
+.services-hero h1 {
+    margin: 0 0 18px;
+    color: #172554;
+    font-size: 44px;
+    line-height: 1.2;
+}
+
+.services-hero p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+.services-list-section {
+    padding: 70px 0;
+    background: #ffffff;
+}
+
+.public-services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 25px;
+}
+
+.public-service-card {
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.public-service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+.public-service-image {
+    width: 100%;
+    height: 240px;
+    background: #f3f4f6;
+    overflow: hidden;
+}
+
+.public-service-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.public-service-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.public-service-content {
+    padding: 22px;
+}
+
+.public-service-content h2 {
+    margin: 0 0 12px;
+    color: #172554;
+    font-size: 22px;
+    line-height: 1.3;
+}
+
+.public-service-content p {
+    margin: 0;
+    min-height: 72px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.public-service-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+
+.service-view-btn,
+.service-consult-btn {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.service-view-btn {
+    background: #172554;
+    color: #ffffff;
+}
+
+.service-view-btn:hover {
+    background: #111827;
+}
+
+.service-consult-btn {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.service-consult-btn:hover {
+    background: #1d4ed8;
+}
+
+.services-empty {
+    padding: 70px 20px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.services-empty h2 {
+    margin: 0 0 10px;
+    color: #172554;
+}
+
+.services-empty p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.services-final-cta {
+    padding: 60px 0;
+    background: #172554;
+}
+
+.services-final-cta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.services-final-cta .section-eyebrow {
+    color: #fbbf24;
+}
+
+.services-final-cta h2 {
+    margin: 0 0 10px;
+    color: #ffffff;
+    font-size: 30px;
+    line-height: 1.3;
+}
+
+.services-final-cta p {
+    margin: 0;
+    color: #dbeafe;
+    font-size: 15px;
+}
+
+.services-cta-button {
+    display: inline-block;
+    padding: 13px 22px;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #172554;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+
+    .public-services-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .services-hero h1 {
+        font-size: 38px;
+    }
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+    .services-hero {
+        padding: 50px 0;
+    }
+
+    .services-hero h1 {
+        font-size: 32px;
+    }
+
+    .services-hero p {
+        font-size: 15px;
+    }
+
+    .services-list-section {
+        padding: 45px 0;
+    }
+
+    .public-services-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .public-service-image {
+        height: 230px;
+    }
+
+    .public-service-content {
+        padding: 20px;
+    }
+
+    .public-service-actions {
+        flex-direction: column;
+    }
+
+    .service-view-btn,
+    .service-consult-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .services-final-cta-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
