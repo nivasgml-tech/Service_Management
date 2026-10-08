@@ -138,43 +138,47 @@ require_once "includes/header.php";
 
                 <?php endif; ?>
 
-                <?php if (!empty($service_images)): ?>
+       <?php if (!empty($service_images)): ?>
 
-    <div class="service-gallery">
+<div class="service-gallery">
 
-        <h3>Gallery</h3>
+    <h3>Gallery</h3>
 
-        <div class="service-gallery-grid">
+    <div class="service-gallery-grid">
 
-            <?php foreach ($service_images as $image): ?>
+        <?php foreach ($service_images as $image): ?>
 
-                <div class="service-gallery-item">
+            <div class="service-gallery-item">
 
-                    <img
-                        src="<?php echo htmlspecialchars($image['image_path']); ?>"
-                        alt="<?php echo htmlspecialchars(
-                            $image['image_title'] ?: $service['service_name']
-                        ); ?>"
-                    >
+                <img
+                    src="<?php echo htmlspecialchars($image['image_path']); ?>"
+                    alt="<?php echo htmlspecialchars(
+                        $image['image_title'] ?: $service['service_name']
+                    ); ?>"
+                >
 
-                    <?php if (!empty($image['image_title'])): ?>
+                <?php if (!empty($image['image_title'])): ?>
 
-                        <div class="service-gallery-title">
-                            <?php echo htmlspecialchars($image['image_title']); ?>
-                        </div>
+                    <div class="service-gallery-title">
+                        <?php
+                        echo htmlspecialchars(
+                            $image['image_title']
+                        );
+                        ?>
+                    </div>
 
-                    <?php endif; ?>
+                <?php endif; ?>
 
-                </div>
+            </div>
 
-            <?php endforeach; ?>
-
-        </div>
+        <?php endforeach; ?>
 
     </div>
 
+</div>
+
 <?php endif; ?>
-            </div>
+     </div>
 
 
             <!-- CONTENT -->

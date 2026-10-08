@@ -420,6 +420,34 @@ $inactive_services = $stmt->fetchColumn();
             }
 
         }
+.action-edit,
+.action-images,
+.action-features,
+.action-faqs {
+    display: inline-block;
+    padding: 7px 10px;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 12px;
+    margin: 2px;
+}
+
+.action-edit {
+    background: #2563eb;
+}
+
+.action-images {
+    background: #7c3aed;
+}
+
+.action-features {
+    background: #059669;
+}
+
+.action-faqs {
+    background: #d97706;
+}
 
     </style>
 
@@ -749,15 +777,34 @@ $inactive_services = $stmt->fetchColumn();
                             <!-- ACTION -->
 
                             <td>
+    <a
+        href="service-edit.php?id=<?php echo (int)$service['id']; ?>"
+        class="action-edit"
+    >
+        Edit
+    </a>
 
-                                <a
-                                    href="service-edit.php?id=<?php echo $service['id']; ?>"
-                                    class="action-btn edit-btn"
-                                >
-                                    Edit
-                                </a>
+    <a
+        href="service-images.php?service_id=<?php echo (int)$service['id']; ?>"
+        class="action-images"
+    >
+        Images
+    </a>
 
-                            </td>
+    <a
+        href="service-features.php?service_id=<?php echo (int)$service['id']; ?>"
+        class="action-features"
+    >
+        Features
+    </a>
+
+    <a
+        href="service-faqs.php?service_id=<?php echo (int)$service['id']; ?>"
+        class="action-faqs"
+    >
+        FAQs
+    </a>
+</td>
 
 
                         </tr>
