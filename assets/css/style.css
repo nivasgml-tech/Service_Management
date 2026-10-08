@@ -1830,3 +1830,7 @@ a {
     }
 }
 
+.btn-danger {
+    background: #c0392b;
+    color: #fff;
+}

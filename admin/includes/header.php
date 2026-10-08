@@ -35,6 +35,8 @@
             <a href="index.php">Home</a>
 
             <a href="services.php">Services</a>
+            <a href="leads.php">Leads</a>
+<a href="customers.php">Customers</a>
 
             <a href="#">Projects</a>
 
