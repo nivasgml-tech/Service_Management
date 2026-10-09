@@ -650,7 +650,36 @@ $users = $stmt->fetchAll();
                 </div>
 
             </div>
+<hr style="margin: 25px 0; border: 0; border-top: 1px solid #edf0f2;">
 
+<?php if (!empty($lead['customer_id'])): ?>
+
+    <a
+        href="customer-details.php?id=<?php echo (int)$lead['customer_id']; ?>"
+        style="display:inline-block; padding:12px 20px; background:#16804a; color:#fff; border-radius:6px; text-decoration:none; font-weight:700;"
+    >
+        View Linked Customer
+    </a>
+
+<?php else: ?>
+
+    <form
+        method="POST"
+        action="convert-lead-to-customer.php"
+        onsubmit="return confirm('Convert this lead into a customer?');"
+    >
+        <input
+            type="hidden"
+            name="lead_id"
+            value="<?php echo (int)$lead['id']; ?>"
+        >
+
+        <button type="submit" style="background:#16804a;">
+            Convert Lead to Customer
+        </button>
+    </form>
+
+<?php endif; ?>
         </div>
 
 

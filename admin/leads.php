@@ -21,6 +21,7 @@ $status_filter = trim($_GET['status'] ?? '');
 $service_filter = trim($_GET['service_id'] ?? '');
 
 $source_filter = trim($_GET['source_id'] ?? '');
+$conversion_filter = trim($_GET['conversion'] ?? '');
 
 
 /* STATUS LIST */
@@ -68,14 +69,11 @@ $sources = $stmt->fetchAll();
 $sql = "
 
     SELECT
-
-        leads.*,
-
-        services.service_name,
-
-        lead_sources.source_name,
-
-        users.name AS assigned_user,
+    leads.*,
+    services.service_name,
+    lead_sources.source_name,
+    users.name AS assigned_user,
+    customers.name AS linked_customer_name,
 
         (
             SELECT MIN(lf.followup_date)
@@ -96,11 +94,13 @@ $sql = "
     LEFT JOIN lead_sources
         ON leads.source_id = lead_sources.id
 
-    LEFT JOIN users
-        ON leads.assigned_to = users.id
+   LEFT JOIN users
+    ON leads.assigned_to = users.id
 
-    WHERE 1 = 1
+LEFT JOIN customers
+    ON leads.customer_id = customers.id
 
+WHERE 1 = 1
 ";
 
 
@@ -173,6 +173,26 @@ if ($source_filter !== '' && is_numeric($source_filter)) {
     $params[] = $source_filter;
 
 }
+
+/* CONVERSION FILTER */
+
+if ($conversion_filter === 'converted') {
+
+    $sql .= " AND leads.customer_id IS NOT NULL
+              AND leads.customer_id IN (
+                  SELECT id FROM customers
+              ) ";
+
+} elseif ($conversion_filter === 'not_converted') {
+
+    $sql .= " AND (
+                  leads.customer_id IS NULL
+                  OR leads.customer_id NOT IN (
+                      SELECT id FROM customers
+                  )
+              ) ";
+}
+
 
 
 /* ORDER */
@@ -695,7 +715,9 @@ $new_leads = $stmt->fetchColumn();
             }
 
         }
-
+.filter-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
+}
     </style>
 
 </head>
@@ -967,6 +989,32 @@ $new_leads = $stmt->fetchColumn();
 
                 </div>
 
+<!-- CONVERSION STATUS -->
+
+<div class="form-group">
+
+    <label>Conversion Status</label>
+
+    <select name="conversion">
+
+        <option value=""
+            <?php echo $conversion_filter === '' ? 'selected' : ''; ?>>
+            All Leads
+        </option>
+
+        <option value="converted"
+            <?php echo $conversion_filter === 'converted' ? 'selected' : ''; ?>>
+            Converted
+        </option>
+
+        <option value="not_converted"
+            <?php echo $conversion_filter === 'not_converted' ? 'selected' : ''; ?>>
+            Not Converted
+        </option>
+
+    </select>
+
+</div>
 
                 <!-- SEARCH BUTTON -->
 
@@ -1024,7 +1072,9 @@ $new_leads = $stmt->fetchColumn();
                         <th>
                             Customer
                         </th>
-
+<th>
+    Customer Record
+</th>
                         <th>
                             Service
                         </th>
@@ -1128,6 +1178,33 @@ $new_leads = $stmt->fetchColumn();
                                 <?php endif; ?>
 
                             </td>
+
+                            <!-- LINKED CUSTOMER RECORD -->
+<td>
+
+    <?php if (!empty($lead['customer_id']) && !empty($lead['linked_customer_name'])): ?>
+
+        <a
+            href="customer-details.php?id=<?php echo (int)$lead['customer_id']; ?>"
+            style="color:#16804a; font-weight:700; text-decoration:none;"
+        >
+            View Customer
+        </a>
+
+        <div class="mobile">
+            <?php echo htmlspecialchars($lead['linked_customer_name']); ?>
+        </div>
+
+    <?php else: ?>
+
+        <span style="color:#9aa5ad;">
+            Not Converted
+        </span>
+
+    <?php endif; ?>
+
+</td>
+
 
 
                             <!-- SERVICE -->
