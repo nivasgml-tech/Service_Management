@@ -385,6 +385,10 @@ $new_leads = $stmt->fetchColumn();
         </a>
 
 
+<a href="followup-reminders.php">
+    Follow-up Reminders
+</a>
+
         <a href="services.php">
             Services
         </a>
@@ -395,10 +399,9 @@ $new_leads = $stmt->fetchColumn();
         </a>
 
 
-        <a href="#">
-            Reports
-        </a>
-
+       <a href="reports.php">
+    Reports
+</a>
 
     </div>
 
@@ -480,6 +483,27 @@ $new_leads = $stmt->fetchColumn();
 
         </div>
 
+        
+<!-- FOLLOW-UP REMINDERS -->
+
+<div class="card">
+
+    <div class="card-title">
+        Follow-up Reminders
+    </div>
+
+    <div class="card-number">
+        Check Pending Follow-ups
+    </div>
+
+    <a
+        href="followup-reminders.php"
+        class="card-link"
+    >
+        View Follow-ups →
+    </a>
+
+</div>
 
     </div>
 
