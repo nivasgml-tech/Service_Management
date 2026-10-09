@@ -56,37 +56,108 @@ $totalStmt = $pdo->prepare($totalSql);
 $totalStmt->execute($totalParams);
 $totalLeads = (int)$totalStmt->fetchColumn();
 
-// Leads by status
-$statusStmt = $pdo->query("
+
+/* Leads by status with date filter */
+
+$statusSql = "
     SELECT status, COUNT(*) AS total
     FROM leads
-    GROUP BY status
-    ORDER BY total DESC
-");
+    WHERE 1=1
+";
+$statusParams = [];
+
+if ($start_date !== '') {
+    $statusSql .= " AND created_at >= ?";
+    $statusParams[] = $start_date . " 00:00:00";
+}
+
+if ($end_date !== '') {
+    $statusSql .= " AND created_at < DATE_ADD(?, INTERVAL 1 DAY)";
+    $statusParams[] = $end_date;
+}
+
+$statusSql .= " GROUP BY status ORDER BY total DESC";
+
+$statusStmt = $pdo->prepare($statusSql);
+$statusStmt->execute($statusParams);
 $statusReports = $statusStmt->fetchAll();
 
-// Leads by service
-$serviceStmt = $pdo->query("
+
+/* Leads by service with date filter */
+
+$serviceSql = "
     SELECT
         s.service_name,
         COUNT(l.id) AS total
     FROM services s
-    LEFT JOIN leads l ON l.service_id = s.id
+    LEFT JOIN leads l
+        ON l.service_id = s.id
+";
+$serviceParams = [];
+$serviceConditions = [];
+
+if ($start_date !== '') {
+    $serviceConditions[] = "l.created_at >= ?";
+    $serviceParams[] = $start_date . " 00:00:00";
+}
+
+if ($end_date !== '') {
+    $serviceConditions[] =
+        "l.created_at < DATE_ADD(?, INTERVAL 1 DAY)";
+    $serviceParams[] = $end_date;
+}
+
+if (!empty($serviceConditions)) {
+    $serviceSql .= " AND " .
+        implode(" AND ", $serviceConditions);
+}
+
+$serviceSql .= "
     GROUP BY s.id, s.service_name
     ORDER BY total DESC, s.service_name ASC
-");
+";
+
+$serviceStmt = $pdo->prepare($serviceSql);
+$serviceStmt->execute($serviceParams);
 $serviceReports = $serviceStmt->fetchAll();
 
-// Leads by source
-$sourceStmt = $pdo->query("
+
+/* Leads by source with date filter */
+
+$sourceSql = "
     SELECT
         ls.source_name,
         COUNT(l.id) AS total
     FROM lead_sources ls
-    LEFT JOIN leads l ON l.source_id = ls.id
+    LEFT JOIN leads l
+        ON l.source_id = ls.id
+";
+$sourceParams = [];
+$sourceConditions = [];
+
+if ($start_date !== '') {
+    $sourceConditions[] = "l.created_at >= ?";
+    $sourceParams[] = $start_date . " 00:00:00";
+}
+
+if ($end_date !== '') {
+    $sourceConditions[] =
+        "l.created_at < DATE_ADD(?, INTERVAL 1 DAY)";
+    $sourceParams[] = $end_date;
+}
+
+if (!empty($sourceConditions)) {
+    $sourceSql .= " AND " .
+        implode(" AND ", $sourceConditions);
+}
+
+$sourceSql .= "
     GROUP BY ls.id, ls.source_name
     ORDER BY total DESC, ls.source_name ASC
-");
+";
+
+$sourceStmt = $pdo->prepare($sourceSql);
+$sourceStmt->execute($sourceParams);
 $sourceReports = $sourceStmt->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -205,6 +276,63 @@ $sourceReports = $sourceStmt->fetchAll();
                 padding: 15px;
             }
         }
+
+        
+.date-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #0000000b;
+}
+
+.date-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.date-field label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.date-field input {
+    padding: 10px;
+    border: 1px solid #ccd4da;
+    border-radius: 5px;
+}
+
+.date-filter-form button {
+    padding: 11px 18px;
+    background: #1769aa;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.reset-filter {
+    padding: 11px 14px;
+    color: #1769aa;
+    text-decoration: none;
+    border: 1px solid #1769aa;
+    border-radius: 5px;
+}
+
+.date-error {
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    background: #fde8e7;
+    color: #a12622;
+    border: 1px solid #f5c2c0;
+    border-radius: 6px;
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
@@ -221,6 +349,50 @@ $sourceReports = $sourceStmt->fetchAll();
         Back to Dashboard
     </a>
 </div>
+
+
+<form method="GET" action="reports.php" class="date-filter-form">
+
+    <div class="date-field">
+        <label for="start_date">Start Date</label>
+        <input
+            type="date"
+            id="start_date"
+            name="start_date"
+            value="<?php echo htmlspecialchars($start_date); ?>"
+        >
+    </div>
+
+    <div class="date-field">
+        <label for="end_date">End Date</label>
+        <input
+            type="date"
+            id="end_date"
+            name="end_date"
+            value="<?php echo htmlspecialchars($end_date); ?>"
+        >
+    </div>
+
+   
+<button type="submit">Apply Filter</button>
+
+<a href="reports.php" class="reset-filter">
+    Reset
+</a>
+
+<a
+    href="export-reports.php?start_date=<?php echo urlencode($start_date); ?>&amp;end_date=<?php echo urlencode($end_date); ?>"
+    class="reset-filter"
+>
+    Export CSV
+</a>
+</form>
+
+<?php if ($date_error !== ''): ?>
+    <div class="date-error">
+        <?php echo htmlspecialchars($date_error); ?>
+    </div>
+<?php endif; ?>
 
 <div class="summary-card">
     <p>Total Leads</p>
