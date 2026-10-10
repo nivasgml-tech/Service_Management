@@ -9,162 +9,170 @@ if (!isset($_SESSION['admin_id'])) {
 
 require_once "../config/database.php";
 
-
 $start_date = trim($_GET['start_date'] ?? '');
 $end_date = trim($_GET['end_date'] ?? '');
-
 $date_error = '';
 
-if (
-    ($start_date !== '' &&
-        !preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date)) ||
-    ($end_date !== '' &&
-        !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date))
-) {
-    $date_error = 'Please enter valid start and end dates.';
+/* Validate date format and actual calendar dates */
+function isValidReportDate($date)
+{
+    if ($date === '') {
+        return true;
+    }
+
+    $parsed = DateTime::createFromFormat('!Y-m-d', $date);
+
+    return $parsed && $parsed->format('Y-m-d') === $date;
+}
+
+if (!isValidReportDate($start_date) ||
+    !isValidReportDate($end_date)) {
+    $date_error = 'Please enter valid dates.';
     $start_date = '';
     $end_date = '';
 }
 
-if (
-    $start_date !== '' &&
+if ($start_date !== '' &&
     $end_date !== '' &&
-    $start_date > $end_date
-) {
+    $start_date > $end_date) {
     $date_error = 'Start date cannot be after end date.';
     $start_date = '';
     $end_date = '';
 }
 
+/* Reusable date filter for lead queries */
+function buildLeadDateFilter($start_date, $end_date, $column = 'created_at')
+{
+    $sql = '';
+    $params = [];
 
-/* Total leads with date filter */
+    if ($start_date !== '') {
+        $sql .= " AND $column >= ?";
+        $params[] = $start_date . ' 00:00:00';
+    }
 
-$totalSql = "SELECT COUNT(*) FROM leads WHERE 1=1";
-$totalParams = [];
+    if ($end_date !== '') {
+        $sql .= " AND $column < DATE_ADD(?, INTERVAL 1 DAY)";
+        $params[] = $end_date;
+    }
 
-if ($start_date !== '') {
-    $totalSql .= " AND created_at >= ?";
-    $totalParams[] = $start_date . " 00:00:00";
+    return [$sql, $params];
 }
 
-if ($end_date !== '') {
-    $totalSql .= " AND created_at < DATE_ADD(?, INTERVAL 1 DAY)";
-    $totalParams[] = $end_date;
-}
+/* Total leads */
+list($dateFilter, $dateParams) =
+    buildLeadDateFilter($start_date, $end_date);
 
-$totalStmt = $pdo->prepare($totalSql);
-$totalStmt->execute($totalParams);
-$totalLeads = (int)$totalStmt->fetchColumn();
+$stmt = $pdo->prepare(
+    "SELECT COUNT(*) FROM leads WHERE 1=1 $dateFilter"
+);
+$stmt->execute($dateParams);
+$totalLeads = (int)$stmt->fetchColumn();
 
-
-/* Leads by status with date filter */
-
-$statusSql = "
+/* Leads by status */
+$stmt = $pdo->prepare("
     SELECT status, COUNT(*) AS total
     FROM leads
-    WHERE 1=1
-";
-$statusParams = [];
+    WHERE 1=1 $dateFilter
+    GROUP BY status
+    ORDER BY total DESC, status ASC
+");
+$stmt->execute($dateParams);
+$statusReports = $stmt->fetchAll();
 
-if ($start_date !== '') {
-    $statusSql .= " AND created_at >= ?";
-    $statusParams[] = $start_date . " 00:00:00";
-}
+/* Leads by service */
+list($serviceDateFilter, $serviceParams) =
+    buildLeadDateFilter($start_date, $end_date, 'l.created_at');
 
-if ($end_date !== '') {
-    $statusSql .= " AND created_at < DATE_ADD(?, INTERVAL 1 DAY)";
-    $statusParams[] = $end_date;
-}
-
-$statusSql .= " GROUP BY status ORDER BY total DESC";
-
-$statusStmt = $pdo->prepare($statusSql);
-$statusStmt->execute($statusParams);
-$statusReports = $statusStmt->fetchAll();
-
-
-/* Leads by service with date filter */
-
-$serviceSql = "
-    SELECT
-        s.service_name,
-        COUNT(l.id) AS total
+$stmt = $pdo->prepare("
+    SELECT s.service_name, COUNT(l.id) AS total
     FROM services s
     LEFT JOIN leads l
-        ON l.service_id = s.id
-";
-$serviceParams = [];
-$serviceConditions = [];
-
-if ($start_date !== '') {
-    $serviceConditions[] = "l.created_at >= ?";
-    $serviceParams[] = $start_date . " 00:00:00";
-}
-
-if ($end_date !== '') {
-    $serviceConditions[] =
-        "l.created_at < DATE_ADD(?, INTERVAL 1 DAY)";
-    $serviceParams[] = $end_date;
-}
-
-if (!empty($serviceConditions)) {
-    $serviceSql .= " AND " .
-        implode(" AND ", $serviceConditions);
-}
-
-$serviceSql .= "
+        ON l.service_id = s.id $serviceDateFilter
     GROUP BY s.id, s.service_name
     ORDER BY total DESC, s.service_name ASC
-";
+");
+$stmt->execute($serviceParams);
+$serviceReports = $stmt->fetchAll();
 
-$serviceStmt = $pdo->prepare($serviceSql);
-$serviceStmt->execute($serviceParams);
-$serviceReports = $serviceStmt->fetchAll();
-
-
-/* Leads by source with date filter */
-
-$sourceSql = "
-    SELECT
-        ls.source_name,
-        COUNT(l.id) AS total
+/* Leads by source */
+$stmt = $pdo->prepare("
+    SELECT ls.source_name, COUNT(l.id) AS total
     FROM lead_sources ls
     LEFT JOIN leads l
-        ON l.source_id = ls.id
-";
-$sourceParams = [];
-$sourceConditions = [];
-
-if ($start_date !== '') {
-    $sourceConditions[] = "l.created_at >= ?";
-    $sourceParams[] = $start_date . " 00:00:00";
-}
-
-if ($end_date !== '') {
-    $sourceConditions[] =
-        "l.created_at < DATE_ADD(?, INTERVAL 1 DAY)";
-    $sourceParams[] = $end_date;
-}
-
-if (!empty($sourceConditions)) {
-    $sourceSql .= " AND " .
-        implode(" AND ", $sourceConditions);
-}
-
-$sourceSql .= "
+        ON l.source_id = ls.id $serviceDateFilter
     GROUP BY ls.id, ls.source_name
     ORDER BY total DESC, ls.source_name ASC
-";
+");
+$stmt->execute($serviceParams);
+$sourceReports = $stmt->fetchAll();
 
-$sourceStmt = $pdo->prepare($sourceSql);
-$sourceStmt->execute($sourceParams);
-$sourceReports = $sourceStmt->fetchAll();
+/* Chart helper: avoid division by zero */
+function chartMaximum($rows)
+{
+    $maximum = 0;
+
+    foreach ($rows as $row) {
+        $maximum = max($maximum, (int)$row['total']);
+    }
+
+    return max(1, $maximum);
+}
+
+/* Render a responsive horizontal bar chart */
+function renderChart($title, $rows, $labelKey, $emptyMessage)
+{
+    $maximum = chartMaximum($rows);
+    ?>
+    <section class="report-section chart-section">
+        <h2><?php echo htmlspecialchars($title); ?></h2>
+
+        <?php if (empty($rows)): ?>
+            <p class="empty-message">
+                <?php echo htmlspecialchars($emptyMessage); ?>
+            </p>
+        <?php else: ?>
+            <div class="chart-list">
+                <?php foreach ($rows as $row): ?>
+                    <?php
+                    $label = (string)$row[$labelKey];
+                    $total = (int)$row['total'];
+                    $width = ($total / $maximum) * 100;
+                    ?>
+                    <div class="chart-row">
+                        <div class="chart-label-line">
+                            <span class="chart-label">
+                                <?php echo htmlspecialchars($label); ?>
+                            </span>
+                            <strong><?php echo $total; ?></strong>
+                        </div>
+
+                        <div class="bar-track">
+                            <div
+                                class="bar-fill"
+                                style="width: <?php echo $width; ?>%;"
+                                role="img"
+                                aria-label="<?php
+                                    echo htmlspecialchars(
+                                        $label . ': ' . $total . ' leads'
+                                    );
+                                ?>"
+                            ></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
+    <?php
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Lead Reports</title>
 
     <style>
@@ -208,7 +216,8 @@ $sourceReports = $sourceStmt->fetchAll();
         }
 
         .summary-card,
-        .report-section {
+        .report-section,
+        .date-filter-form {
             background: white;
             padding: 22px;
             margin-bottom: 25px;
@@ -232,6 +241,58 @@ $sourceReports = $sourceStmt->fetchAll();
         .report-section h2 {
             margin-top: 0;
             font-size: 21px;
+        }
+
+        .date-filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 15px;
+        }
+
+        .date-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .date-field label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .date-field input {
+            padding: 10px;
+            border: 1px solid #ccd4da;
+            border-radius: 5px;
+        }
+
+        .date-filter-form button {
+            padding: 11px 18px;
+            background: #1769aa;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .reset-filter {
+            display: inline-block;
+            padding: 11px 14px;
+            color: #1769aa;
+            text-decoration: none;
+            border: 1px solid #1769aa;
+            border-radius: 5px;
+        }
+
+        .date-error {
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            background: #fde8e7;
+            color: #a12622;
+            border: 1px solid #f5c2c0;
+            border-radius: 6px;
+            font-weight: bold;
         }
 
         .table-wrap {
@@ -266,75 +327,87 @@ $sourceReports = $sourceStmt->fetchAll();
             border-radius: 6px;
         }
 
+        /* Chart styles */
+        .chart-section {
+            overflow: hidden;
+        }
+
+        .chart-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-row {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .chart-label-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 8px;
+        }
+
+        .chart-label {
+            overflow-wrap: anywhere;
+            font-size: 14px;
+        }
+
+        .chart-label-line strong {
+            color: #1769aa;
+            flex-shrink: 0;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 16px;
+            background: #eaf0f5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            min-width: 0;
+            background: #1769aa;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .chart-section:nth-of-type(2) .bar-fill {
+            background: #159578;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 14px;
             }
 
             .summary-card,
-            .report-section {
+            .report-section,
+            .date-filter-form {
                 padding: 15px;
             }
+
+            .date-field {
+                width: 100%;
+            }
+
+            .date-field input {
+                width: 100%;
+            }
+
+            .date-filter-form button,
+            .date-filter-form .reset-filter {
+                text-align: center;
+            }
         }
-
-        
-.date-filter-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 15px;
-    padding: 20px;
-    margin-bottom: 25px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px #0000000b;
-}
-
-.date-field {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.date-field label {
-    font-size: 14px;
-    font-weight: bold;
-}
-
-.date-field input {
-    padding: 10px;
-    border: 1px solid #ccd4da;
-    border-radius: 5px;
-}
-
-.date-filter-form button {
-    padding: 11px 18px;
-    background: #1769aa;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.reset-filter {
-    padding: 11px 14px;
-    color: #1769aa;
-    text-decoration: none;
-    border: 1px solid #1769aa;
-    border-radius: 5px;
-}
-
-.date-error {
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    background: #fde8e7;
-    color: #a12622;
-    border: 1px solid #f5c2c0;
-    border-radius: 6px;
-    font-weight: bold;
-}
     </style>
 </head>
+
 <body>
 
 <div class="page-header">
@@ -350,9 +423,7 @@ $sourceReports = $sourceStmt->fetchAll();
     </a>
 </div>
 
-
 <form method="GET" action="reports.php" class="date-filter-form">
-
     <div class="date-field">
         <label for="start_date">Start Date</label>
         <input
@@ -373,19 +444,25 @@ $sourceReports = $sourceStmt->fetchAll();
         >
     </div>
 
-   
-<button type="submit">Apply Filter</button>
+    <button type="submit">Apply Filter</button>
 
-<a href="reports.php" class="reset-filter">
-    Reset
-</a>
+    <a href="reports.php" class="reset-filter">Reset</a>
 
+    <a
+        href="export-reports.php?start_date=<?php
+            echo urlencode($start_date);
+        ?>&amp;end_date=<?php echo urlencode($end_date); ?>"
+        class="reset-filter"
+    >Export CSV</a>
+
+    
 <a
-    href="export-reports.php?start_date=<?php echo urlencode($start_date); ?>&amp;end_date=<?php echo urlencode($end_date); ?>"
+    href="export-summary-reports.php?start_date=<?php echo urlencode($start_date); ?>&amp;end_date=<?php echo urlencode($end_date); ?>"
     class="reset-filter"
 >
-    Export CSV
+    Export Summary Reports
 </a>
+
 </form>
 
 <?php if ($date_error !== ''): ?>
@@ -398,6 +475,32 @@ $sourceReports = $sourceStmt->fetchAll();
     <p>Total Leads</p>
     <strong><?php echo $totalLeads; ?></strong>
 </div>
+
+<!-- Charts -->
+<?php
+renderChart(
+    'Leads by Status',
+    $statusReports,
+    'status',
+    'No lead records found.'
+);
+
+renderChart(
+    'Leads by Service',
+    $serviceReports,
+    'service_name',
+    'No services found.'
+);
+
+renderChart(
+    'Leads by Source',
+    $sourceReports,
+    'source_name',
+    'No lead sources found.'
+);
+?>
+
+<!-- Existing detailed report tables -->
 
 <section class="report-section">
     <h2>1. Lead Status Report</h2>
@@ -448,7 +551,9 @@ $sourceReports = $sourceStmt->fetchAll();
                     <?php foreach ($serviceReports as $row): ?>
                         <tr>
                             <td>
-                                <?php echo htmlspecialchars($row['service_name']); ?>
+                                <?php
+                                echo htmlspecialchars($row['service_name']);
+                                ?>
                             </td>
                             <td class="count">
                                 <?php echo (int)$row['total']; ?>
@@ -479,7 +584,9 @@ $sourceReports = $sourceStmt->fetchAll();
                     <?php foreach ($sourceReports as $row): ?>
                         <tr>
                             <td>
-                                <?php echo htmlspecialchars($row['source_name']); ?>
+                                <?php
+                                echo htmlspecialchars($row['source_name']);
+                                ?>
                             </td>
                             <td class="count">
                                 <?php echo (int)$row['total']; ?>

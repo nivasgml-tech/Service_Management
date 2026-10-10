@@ -394,9 +394,7 @@ $new_leads = $stmt->fetchColumn();
         </a>
 
 
-        <a href="#">
-            Customers
-        </a>
+       <a href="customers.php">Customers</a>
 
 
        <a href="reports.php">
