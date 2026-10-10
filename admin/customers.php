@@ -597,6 +597,10 @@ $total_customers = $stmt->fetchColumn();
 
     </div>
 
+<a href="dashboard.php" class="dashboard-link">
+    ← Back to Dashboard
+</a>
+
 
     <a
         href="logout.php"

@@ -1,10 +1,4 @@
-<?php
-
-require_once "config/database.php";
-
-?>
-
-<?php include "includes/header.php"; ?>
+<?php include __DIR__ . "/includes/header.php"; ?>
 
 
 <!-- HERO SECTION -->
