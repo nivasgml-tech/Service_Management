@@ -370,39 +370,40 @@ $new_leads = $stmt->fetchColumn();
 
     <!-- ADMIN NAVIGATION -->
 
-    <div class="admin-nav">
+    
+<!-- ADMIN NAVIGATION -->
 
-        <a
-            href="dashboard.php"
-            class="active"
-        >
-            Dashboard
-        </a>
+<div class="admin-nav">
 
+    <a href="dashboard.php" class="active">
+        Dashboard
+    </a>
 
-        <a href="leads.php">
-            Leads
-        </a>
+    <a href="leads.php">
+        Leads
+    </a>
 
+    <a href="followup-reminders.php">
+        Follow-up Reminders
+    </a>
 
-<a href="followup-reminders.php">
-    Follow-up Reminders
-</a>
+    <a href="services.php">
+        Services
+    </a>
 
-        <a href="services.php">
-            Services
-        </a>
+    <a href="customers.php">
+        Customers
+    </a>
 
+    <a href="reports.php">
+        Reports
+    </a>
 
-       <a href="customers.php">Customers</a>
+    <a href="customer-reports.php">
+        Customer Reports
+    </a>
 
-
-       <a href="reports.php">
-    Reports
-</a>
-
-    </div>
-
+</div>
 
     <!-- DASHBOARD CARDS -->
 
@@ -499,6 +500,27 @@ $new_leads = $stmt->fetchColumn();
         class="card-link"
     >
         View Follow-ups →
+    </a>
+
+</div>
+
+<!-- CUSTOMER REPORTS -->
+
+<div class="card">
+
+    <div class="card-title">
+        Customer Reports
+    </div>
+
+    <div class="card-number">
+        View Customer Statistics
+    </div>
+
+    <a
+        href="customer-reports.php"
+        class="card-link"
+    >
+        View Customer Reports →
     </a>
 
 </div>
