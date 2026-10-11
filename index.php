@@ -3,36 +3,39 @@
 
 <!-- HERO SECTION -->
 
-<section class="hero">
+
+<!-- PREMIUM HERO SECTION -->
+
+<section class="hero ydh-home-hero">
 
     <div class="hero-overlay"></div>
 
     <div class="container hero-content">
 
         <span class="hero-tag">
-            YOUR TRUSTED BUSINESS PARTNER
+            YOUR DREAM HOME & FINANCIAL SERVICES
         </span>
 
         <h1>
-            Property. Construction.
-            <span>Finance.</span>
-            One Trusted Partner.
+            Your Goals.<br>
+            Our Services.<br>
+            <span>One Trusted Partner.</span>
         </h1>
 
         <p>
-            From finding the right property to construction,
-            financial guidance and loan processing,
-            we bring multiple solutions together under one roof.
+            From dream homes to smart investments,
+            from construction to financial solutions,
+            we are here to guide you at every step.
         </p>
 
         <div class="hero-buttons">
 
             <a href="#services" class="btn btn-primary">
-                Explore Services
+                Explore Our Services →
             </a>
 
             <a href="#enquiry" class="btn btn-outline">
-                Talk to an Expert
+                Contact Us
             </a>
 
         </div>
@@ -41,6 +44,44 @@
 
 </section>
 
+
+<!-- SERVICE CATEGORY SHORTCUTS -->
+
+<section class="service-shortcuts">
+    <div class="container shortcut-grid">
+
+        <a href="services.php" class="shortcut-card">
+            <span class="shortcut-icon">⌂</span>
+            <h3>Real Estate</h3>
+            <p>Buy | Sell | Rent</p>
+        </a>
+
+        <a href="services.php" class="shortcut-card">
+            <span class="shortcut-icon">▦</span>
+            <h3>Construction</h3>
+            <p>Build Your Dreams</p>
+        </a>
+
+        <a href="services.php" class="shortcut-card">
+            <span class="shortcut-icon">◈</span>
+            <h3>Financial Advice</h3>
+            <p>Plan Your Future</p>
+        </a>
+
+        <a href="services.php" class="shortcut-card">
+            <span class="shortcut-icon">▣</span>
+            <h3>Loan Management</h3>
+            <p>Easy & Secure Process</p>
+        </a>
+
+        <a href="services.php" class="shortcut-card">
+            <span class="shortcut-icon">✦</span>
+            <h3>End-to-End Support</h3>
+            <p>From Start to Finish</p>
+        </a>
+
+    </div>
+</section>
 
 <!-- TRUST / STATS -->
 
@@ -201,111 +242,60 @@
 
 <!-- WHY US -->
 
-<section class="why-section">
 
-    <div class="container why-grid">
-
-        <div>
-
-            <span class="section-label">
-                WHY CHOOSE US
-            </span>
-
-            <h2>
-                One Partner.
-                Multiple Solutions.
-            </h2>
-
-            <p>
-                Whether you are planning to buy a property,
-                construct a building, arrange finance or
-                process a loan, our team helps you move
-                from requirement to execution.
-            </p>
-
-            <a href="#enquiry" class="btn btn-primary">
-                Talk to Our Team
-            </a>
-
+<section class="why-us-section">
+    <div class="container">
+        <div class="section-heading">
+            <span class="hero-tag">WHY CHOOSE US</span>
+            <h2>Your Trusted Partner at Every Step</h2>
+            <p>Practical guidance and support for your property, construction and financial needs.</p>
         </div>
 
-
-        <div class="why-points">
-
-            <div class="why-point">
-
-                <strong>01</strong>
-
-                <div>
-                    <h3>End-to-End Support</h3>
-                    <p>
-                        From initial consultation to completion.
-                    </p>
-                </div>
-
+        <div class="why-us-grid">
+            <div class="why-us-card">
+                <div class="why-us-icon">⌂</div>
+                <h3>Complete Solutions</h3>
+                <p>Property, construction and financial services coordinated in one place.</p>
             </div>
 
-
-            <div class="why-point">
-
-                <strong>02</strong>
-
-                <div>
-                    <h3>Multiple Services</h3>
-                    <p>
-                        Property, construction and finance in one place.
-                    </p>
-                </div>
-
+            <div class="why-us-card">
+                <div class="why-us-icon">✓</div>
+                <h3>Personalised Guidance</h3>
+                <p>Support based on your requirements, priorities and project needs.</p>
             </div>
 
-
-            <div class="why-point">
-
-                <strong>03</strong>
-
-                <div>
-                    <h3>Personalised Guidance</h3>
-                    <p>
-                        Solutions based on your individual requirements.
-                    </p>
-                </div>
-
+            <div class="why-us-card">
+                <div class="why-us-icon">↗</div>
+                <h3>End-to-End Support</h3>
+                <p>Guidance through enquiries, service details and the next steps in your journey.</p>
             </div>
-
         </div>
-
     </div>
-
 </section>
 
 
 <!-- ENQUIRY CTA -->
 
-<section class="enquiry-cta" id="enquiry">
 
+<section class="consultation-banner" id="enquiry">
     <div class="container">
+        <div class="consultation-inner">
+            <div>
+                <h2>Let's Discuss Your Requirements</h2>
+                <p>
+                    Looking for property, construction or financial assistance?
+                    Contact us to discuss your requirements and explore the
+                    services available for your needs.
+                </p>
+            </div>
 
-        <span>
-            HAVE A REQUIREMENT?
-        </span>
-
-        <h2>
-            Let's discuss your requirement.
-        </h2>
-
-        <p>
-            Tell us what you are looking for and
-            our team will get back to you.
-        </p>
-
-        <a href="#" class="btn btn-light">
-            Send an Enquiry
-        </a>
-
+            <a href="/service-management/enquiry.php" class="btn">
+                Get Consultation →
+            </a>
+        </div>
     </div>
-
 </section>
+
 
 
 <?php include "includes/footer.php"; ?>

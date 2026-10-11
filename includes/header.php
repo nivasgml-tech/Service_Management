@@ -24,14 +24,23 @@ require_once __DIR__ . '/../config/database.php';
 </head>
 <body>
 
-<header class="site-header">
-    <div class="container">
-        <a href="index.php" class="logo">YourDreamHome</a>
 
-        <nav class="main-nav">
-            <a href="index.php">Home</a>
-            <a href="services.php">Services</a>
-            <a href="enquiry.php">Enquiry</a>
-        </nav>
+<header class="site-header ydh-header">
+    <div class="container">
+        <div class="ydh-header-inner">
+
+            <a href="/service-management/index.php" class="ydh-logo">
+                <span class="ydh-logo-name">YourDreamHome</span>
+                <span class="ydh-logo-tagline">PROPERTY · CONSTRUCTION · FINANCE</span>
+            </a>
+
+            <nav class="main-nav ydh-main-nav">
+                <a href="/service-management/index.php">Home</a>
+                <a href="/service-management/services.php">Services</a>
+                <a href="/service-management/enquiry.php">Enquiry</a>
+            </nav>
+
+        </div>
     </div>
 </header>
+
