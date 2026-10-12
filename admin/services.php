@@ -1,16 +1,14 @@
+
 <?php
 
 session_start();
 
 if (!isset($_SESSION['admin_id'])) {
-
     header("Location: login.php");
-
     exit;
 }
 
 require_once "../config/database.php";
-
 
 /* GET ALL SERVICES */
 
@@ -20,8 +18,7 @@ $stmt = $pdo->query("
     ORDER BY sort_order ASC, id ASC
 ");
 
-$services = $stmt->fetchAll();
-
+$services = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* COUNTS */
 
@@ -30,8 +27,7 @@ $stmt = $pdo->query("
     FROM services
 ");
 
-$total_services = $stmt->fetchColumn();
-
+$total_services = (int) $stmt->fetchColumn();
 
 $stmt = $pdo->query("
     SELECT COUNT(*)
@@ -39,8 +35,7 @@ $stmt = $pdo->query("
     WHERE status = 1
 ");
 
-$active_services = $stmt->fetchColumn();
-
+$active_services = (int) $stmt->fetchColumn();
 
 $stmt = $pdo->query("
     SELECT COUNT(*)
@@ -48,16 +43,14 @@ $stmt = $pdo->query("
     WHERE status = 0
 ");
 
-$inactive_services = $stmt->fetchColumn();
+$inactive_services = (int) $stmt->fetchColumn();
 
 ?>
 
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -65,778 +58,291 @@ $inactive_services = $stmt->fetchColumn();
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Services Management | YourDream
-    </title>
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-
-            margin: 0;
-
-            font-family: Arial, sans-serif;
-
-            background: #f5f7f9;
-
-            color: #263746;
-
-        }
-
-        .topbar {
-
-            background: #071a2d;
-
-            color: #ffffff;
-
-            padding: 18px 30px;
-
-            display: flex;
-
-            justify-content: space-between;
-
-            align-items: center;
-
-        }
-
-        .logo {
-
-            font-size: 24px;
-
-            font-weight: 700;
-
-        }
-
-        .logo span {
-
-            color: #c6a15b;
-
-        }
-
-        .logout-btn {
-
-            color: #ffffff;
-
-            text-decoration: none;
-
-            border: 1px solid #8293a3;
-
-            padding: 10px 20px;
-
-            border-radius: 6px;
-
-        }
-
-        .container {
-
-            max-width: 1300px;
-
-            margin: auto;
-
-            padding: 35px 20px;
-
-        }
-
-        .back-link {
-
-            display: inline-block;
-
-            margin-bottom: 20px;
-
-            color: #10253d;
-
-            text-decoration: none;
-
-            font-weight: 700;
-
-        }
-
-        .page-header {
-
-            display: flex;
-
-            justify-content: space-between;
-
-            align-items: center;
-
-            margin-bottom: 25px;
-
-        }
-
-        .page-header h1 {
-
-            margin: 0 0 8px 0;
-
-        }
-
-        .page-header p {
-
-            margin: 0;
-
-            color: #687681;
-
-        }
-
-        .add-btn {
-
-            background: #10253d;
-
-            color: #ffffff;
-
-            padding: 12px 20px;
-
-            border-radius: 7px;
-
-            text-decoration: none;
-
-            font-weight: 700;
-
-        }
-
-        .add-btn:hover {
-
-            background: #173653;
-
-        }
-
-        /* SUMMARY */
-
-        .summary {
-
-            display: grid;
-
-            grid-template-columns: repeat(3, 1fr);
-
-            gap: 20px;
-
-            margin-bottom: 25px;
-
-        }
-
-        .summary-card {
-
-            background: #ffffff;
-
-            padding: 25px;
-
-            border-radius: 12px;
-
-            box-shadow:
-                0 5px 20px
-                rgba(0,0,0,0.05);
-
-        }
-
-        .summary-label {
-
-            color: #687681;
-
-            margin-bottom: 10px;
-
-        }
-
-        .summary-number {
-
-            font-size: 34px;
-
-            font-weight: 700;
-
-            color: #10253d;
-
-        }
-
-        /* TABLE */
-
-        .table-card {
-
-            background: #ffffff;
-
-            border-radius: 12px;
-
-            box-shadow:
-                0 5px 20px
-                rgba(0,0,0,0.05);
-
-            overflow-x: auto;
-
-        }
-
-        table {
-
-            width: 100%;
-
-            border-collapse: collapse;
-
-            min-width: 900px;
-
-        }
-
-        th {
-
-            background: #f0f3f5;
-
-            padding: 15px;
-
-            text-align: left;
-
-            font-size: 13px;
-
-            color: #52616d;
-
-        }
-
-        td {
-
-            padding: 15px;
-
-            border-top: 1px solid #edf0f2;
-
-            vertical-align: middle;
-
-        }
-
-        tr:hover td {
-
-            background: #fafbfc;
-
-        }
-
-        .service-name {
-
-            font-weight: 700;
-
-            color: #10253d;
-
-        }
-
-        .slug {
-
-            color: #7a8791;
-
-            font-size: 13px;
-
-            margin-top: 4px;
-
-        }
-
-        .description {
-
-            max-width: 350px;
-
-            line-height: 1.5;
-
-        }
-
-        .status {
-
-            display: inline-block;
-
-            padding: 6px 10px;
-
-            border-radius: 5px;
-
-            font-size: 12px;
-
-            font-weight: 700;
-
-        }
-
-        .active {
-
-            background: #e8f5e9;
-
-            color: #2e7d32;
-
-        }
-
-        .inactive {
-
-            background: #ffebee;
-
-            color: #c62828;
-
-        }
-
-        .action-btn {
-
-            display: inline-block;
-
-            padding: 8px 13px;
-
-            border-radius: 5px;
-
-            text-decoration: none;
-
-            font-size: 13px;
-
-            font-weight: 700;
-
-            margin-right: 5px;
-
-        }
-
-        .edit-btn {
-
-            background: #10253d;
-
-            color: #ffffff;
-
-        }
-
-        .empty {
-
-            text-align: center;
-
-            padding: 50px;
-
-            color: #7a8791;
-
-        }
-
-        @media (max-width: 800px) {
-
-            .summary {
-
-                grid-template-columns: 1fr;
-
-            }
-
-            .page-header {
-
-                display: block;
-
-            }
-
-            .add-btn {
-
-                display: inline-block;
-
-                margin-top: 20px;
-
-            }
-
-        }
-.action-edit,
-.action-images,
-.action-features,
-.action-faqs {
-    display: inline-block;
-    padding: 7px 10px;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 12px;
-    margin: 2px;
-}
-
-.action-edit {
-    background: #2563eb;
-}
-
-.action-images {
-    background: #7c3aed;
-}
-
-.action-features {
-    background: #059669;
-}
-
-.action-faqs {
-    background: #d97706;
-}
-
-    </style>
-
+    <title>Services Management | YourDream</title>
+
+    <!-- Common Admin CSS -->
+    <link
+        rel="stylesheet" href="assets/css/admin-style.css?v=2"
+    >
 </head>
 
-<body>
+<body class="admin-page">
 
+    <!-- TOP BAR -->
 
-<!-- TOP BAR -->
+    <div class="topbar">
 
-<div class="topbar">
-
-    <div class="logo">
-
-        Your<span>Dream</span> Admin
-
-    </div>
-
-    <a
-        href="logout.php"
-        class="logout-btn"
-    >
-        Logout
-    </a>
-
-</div>
-
-
-<div class="container">
-
-
-    <!-- BACK -->
-
-    <a
-        href="dashboard.php"
-        class="back-link"
-    >
-        ← Dashboard
-    </a>
-
-
-    <!-- HEADER -->
-
-    <div class="page-header">
-
-        <div>
-
-            <h1>
-                Services Management
-            </h1>
-
-            <p>
-                Manage website services and their content.
-            </p>
-
+        <div class="logo">
+            Your<span>Dream</span> Admin
         </div>
 
-
-        <a
-            href="service-add.php"
-            class="add-btn"
-        >
-            + Add Service
+        <a href="logout.php" class="logout-btn">
+            Logout
         </a>
 
     </div>
 
+    <div class="container">
 
-    <!-- SUMMARY -->
+        <!-- BACK TO DASHBOARD -->
 
-    <div class="summary">
+        <a href="dashboard.php" class="back-link">
+            ← Dashboard
+        </a>
 
+        <!-- PAGE HEADER -->
 
-        <div class="summary-card">
+        <div class="page-header">
 
-            <div class="summary-label">
-                Total Services
+            <div>
+                <h1>Services Management</h1>
+
+                <p>
+                    Manage website services and their content.
+                </p>
             </div>
 
-            <div class="summary-number">
+            <a href="service-add.php" class="add-btn">
+                + Add Service
+            </a>
 
-                <?php
-                echo $total_services;
-                ?>
+        </div>
+
+        <!-- SUMMARY CARDS -->
+
+        <div class="summary">
+
+            <div class="summary-card">
+
+                <div class="summary-label">
+                    Total Services
+                </div>
+
+                <div class="summary-number">
+                    <?= $total_services ?>
+                </div>
+
+            </div>
+
+            <div class="summary-card">
+
+                <div class="summary-label">
+                    Active Services
+                </div>
+
+                <div class="summary-number">
+                    <?= $active_services ?>
+                </div>
+
+            </div>
+
+            <div class="summary-card">
+
+                <div class="summary-label">
+                    Inactive Services
+                </div>
+
+                <div class="summary-number">
+                    <?= $inactive_services ?>
+                </div>
 
             </div>
 
         </div>
 
+        <!-- SERVICES TABLE -->
 
-        <div class="summary-card">
+        <div class="table-card">
 
-            <div class="summary-label">
-                Active Services
-            </div>
+            <?php if (!empty($services)): ?>
 
-            <div class="summary-number">
+                <table>
 
-                <?php
-                echo $active_services;
-                ?>
-
-            </div>
-
-        </div>
-
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-                Inactive Services
-            </div>
-
-            <div class="summary-number">
-
-                <?php
-                echo $inactive_services;
-                ?>
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-
-    <!-- SERVICES TABLE -->
-
-    <div class="table-card">
-
-
-        <?php if (count($services) > 0): ?>
-
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            ID
-                        </th>
-
-                        <th>
-                            Service
-                        </th>
-
-                        <th>
-                            Short Description
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Sort Order
-                        </th>
-
-                        <th>
-                            Created
-                        </th>
-
-                        <th>
-                            Action
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-
-                    <?php foreach ($services as $service): ?>
-
-
+                    <thead>
                         <tr>
+                            <th>ID</th>
+                            <th>Service</th>
+                            <th>Short Description</th>
+                            <th>Status</th>
+                            <th>Sort Order</th>
+                            <th>Created</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
 
+                    <tbody>
 
-                            <!-- ID -->
+                        <?php foreach ($services as $service): ?>
 
-                            <td>
+                            <tr>
 
-                                <?php
-                                echo $service['id'];
-                                ?>
+                                <!-- ID -->
 
-                            </td>
+                                <td>
+                                    <?= (int) $service['id'] ?>
+                                </td>
 
+                                <!-- SERVICE -->
 
-                            <!-- SERVICE -->
+                                <td>
 
-                            <td>
+                                    <div class="service-name">
+                                        <?= htmlspecialchars(
+                                            $service['service_name'] ?? '',
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </div>
 
-                                <div class="service-name">
+                                    <div class="slug">
+                                        /
+                                        <?= htmlspecialchars(
+                                            $service['slug'] ?? '',
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </div>
 
-                                    <?php
-                                    echo htmlspecialchars(
-                                        $service['service_name']
-                                    );
-                                    ?>
+                                </td>
 
-                                </div>
+                                <!-- DESCRIPTION -->
 
+                                <td>
 
-                                <div class="slug">
+                                    <div class="description">
 
-                                    /
-                                    <?php
-                                    echo htmlspecialchars(
-                                        $service['slug']
-                                    );
-                                    ?>
+                                        <?php
 
-                                </div>
-
-                            </td>
-
-
-                            <!-- DESCRIPTION -->
-
-                            <td>
-
-                                <div class="description">
-
-                                    <?php
-
-                                    $description =
-                                        trim(
-                                            $service['short_description']
-                                            ?? ''
+                                        $description = trim(
+                                            $service['short_description'] ?? ''
                                         );
 
+                                        if ($description === '') {
 
-                                    if ($description === '') {
+                                            echo '-';
 
-                                        echo '-';
+                                        } elseif (strlen($description) > 120) {
 
-                                    } elseif (
-                                        strlen($description) > 120
-                                    ) {
+                                            echo htmlspecialchars(
+                                                substr($description, 0, 120) . '...',
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
 
-                                        echo htmlspecialchars(
-                                            substr(
+                                        } else {
+
+                                            echo htmlspecialchars(
                                                 $description,
-                                                0,
-                                                120
-                                            )
-                                            . '...'
-                                        );
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
 
+                                        }
+
+                                        ?>
+
+                                    </div>
+
+                                </td>
+
+                                <!-- STATUS -->
+
+                                <td>
+
+                                    <?php if ((int) $service['status'] === 1): ?>
+
+                                        <span class="status active">
+                                            Active
+                                        </span>
+
+                                    <?php else: ?>
+
+                                        <span class="status inactive">
+                                            Inactive
+                                        </span>
+
+                                    <?php endif; ?>
+
+                                </td>
+
+                                <!-- SORT ORDER -->
+
+                                <td>
+                                    <?= (int) $service['sort_order'] ?>
+                                </td>
+
+                                <!-- CREATED DATE -->
+
+                                <td>
+
+                                    <?php
+
+                                    if (!empty($service['created_at'])) {
+                                        echo date(
+                                            'd-m-Y',
+                                            strtotime($service['created_at'])
+                                        );
                                     } else {
-
-                                        echo htmlspecialchars(
-                                            $description
-                                        );
-
+                                        echo '-';
                                     }
 
                                     ?>
 
-                                </div>
+                                </td>
 
-                            </td>
+                                <!-- ACTION BUTTONS -->
 
+                                <td class="service-actions">
 
-                            <!-- STATUS -->
-
-                            <td>
-
-                                <?php if (
-                                    $service['status'] == 1
-                                ): ?>
-
-                                    <span
-                                        class="status active"
+                                    <a
+                                        href="service-edit.php?id=<?= (int) $service['id'] ?>"
+                                        class="action-edit"
                                     >
-                                        Active
-                                    </span>
+                                        Edit
+                                    </a>
 
-                                <?php else: ?>
-
-                                    <span
-                                        class="status inactive"
+                                    <a
+                                        href="service-images.php?service_id=<?= (int) $service['id'] ?>"
+                                        class="action-images"
                                     >
-                                        Inactive
-                                    </span>
+                                        Images
+                                    </a>
 
-                                <?php endif; ?>
+                                    <a
+                                        href="service-features.php?service_id=<?= (int) $service['id'] ?>"
+                                        class="action-features"
+                                    >
+                                        Features
+                                    </a>
 
-                            </td>
+                                    <a
+                                        href="service-faqs.php?service_id=<?= (int) $service['id'] ?>"
+                                        class="action-faqs"
+                                    >
+                                        FAQs
+                                    </a>
 
+                                </td>
 
-                            <!-- SORT -->
+                            </tr>
 
-                            <td>
+                        <?php endforeach; ?>
 
-                                <?php
-                                echo $service['sort_order'];
-                                ?>
+                    </tbody>
 
-                            </td>
+                </table>
 
+            <?php else: ?>
 
-                            <!-- CREATED -->
+                <div class="empty">
+                    No services found.
+                </div>
 
-                            <td>
+            <?php endif; ?>
 
-                                <?php
-
-                                echo date(
-                                    'd-m-Y',
-                                    strtotime(
-                                        $service['created_at']
-                                    )
-                                );
-
-                                ?>
-
-                            </td>
-
-
-                            <!-- ACTION -->
-
-                            <td>
-    <a
-        href="service-edit.php?id=<?php echo (int)$service['id']; ?>"
-        class="action-edit"
-    >
-        Edit
-    </a>
-
-    <a
-        href="service-images.php?service_id=<?php echo (int)$service['id']; ?>"
-        class="action-images"
-    >
-        Images
-    </a>
-
-    <a
-        href="service-features.php?service_id=<?php echo (int)$service['id']; ?>"
-        class="action-features"
-    >
-        Features
-    </a>
-
-    <a
-        href="service-faqs.php?service_id=<?php echo (int)$service['id']; ?>"
-        class="action-faqs"
-    >
-        FAQs
-    </a>
-</td>
-
-
-                        </tr>
-
-
-                    <?php endforeach; ?>
-
-
-                </tbody>
-
-            </table>
-
-
-        <?php else: ?>
-
-
-            <div class="empty">
-
-                No services found.
-
-            </div>
-
-
-        <?php endif; ?>
-
+        </div>
 
     </div>
 
-
-</div>
-
-
 </body>
-
 </html>
