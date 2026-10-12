@@ -64,260 +64,225 @@ $new_leads = $stmt->fetchColumn();
 
     <style>
 
-        * {
-            box-sizing: border-box;
-        }
+<style>
+    * {
+        box-sizing: border-box;
+    }
 
-        body {
+    :root {
+        --admin-navy: #101d35;
+        --admin-navy-light: #1b2c49;
+        --admin-gold: #c9a45c;
+        --admin-bg: #f5f7fb;
+        --admin-text: #263247;
+        --admin-muted: #6b7280;
+        --admin-border: #e3e8ef;
+        --admin-shadow: 0 8px 28px rgba(16, 29, 53, 0.07);
+    }
 
-            margin: 0;
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: var(--admin-bg);
+        color: var(--admin-text);
+    }
 
-            font-family: Arial, sans-serif;
+    .topbar {
+        background: var(--admin-navy);
+        color: #fff;
+        padding: 20px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        border-bottom: 3px solid var(--admin-gold);
+    }
 
-            background: #f5f7f9;
+    .logo {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+    }
 
-            color: #263746;
+    .logo span {
+        color: var(--admin-gold);
+    }
 
-        }
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
 
-        .topbar {
+    .topbar a {
+        color: #fff;
+        text-decoration: none;
+    }
 
-            background: #071a2d;
+    .logout-btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border: 1px solid rgba(255,255,255,0.4);
+        border-radius: 8px;
+        transition: 0.2s ease;
+    }
 
-            color: #ffffff;
+    .logout-btn:hover {
+        background: var(--admin-navy-light);
+        border-color: var(--admin-gold);
+    }
 
-            padding: 18px 30px;
+    .container {
+        width: 100%;
+        max-width: 1240px;
+        margin: auto;
+        padding: 38px 24px;
+    }
 
-            display: flex;
+    .welcome {
+        margin-bottom: 28px;
+    }
 
-            justify-content: space-between;
+    .welcome h1 {
+        margin: 0 0 10px;
+        color: var(--admin-navy);
+        font-size: clamp(28px, 4vw, 38px);
+        font-weight: 800;
+    }
 
-            align-items: center;
+    .welcome p {
+        margin: 0;
+        color: var(--admin-muted);
+        font-size: 16px;
+        line-height: 1.7;
+    }
 
-        }
+    .admin-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px;
+        margin-bottom: 30px;
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        box-shadow: var(--admin-shadow);
+    }
 
-        .logo {
+    .admin-nav a {
+        display: inline-block;
+        padding: 11px 15px;
+        border-radius: 7px;
+        text-decoration: none;
+        color: var(--admin-navy);
+        font-size: 14px;
+        font-weight: 700;
+        transition: 0.2s ease;
+    }
 
-            font-size: 24px;
+    .admin-nav a:hover {
+        background: #f3f5f8;
+    }
 
-            font-weight: 700;
+    .admin-nav a.active {
+        background: var(--admin-navy);
+        color: #fff;
+        box-shadow: inset 0 -2px 0 var(--admin-gold);
+    }
 
-        }
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+    }
 
-        .logo span {
+    .card {
+        min-width: 0;
+        padding: 28px;
+        background: #fff;
+        border: 1px solid var(--admin-border);
+        border-radius: 14px;
+        box-shadow: var(--admin-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
 
-            color: #c6a15b;
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(16, 29, 53, 0.11);
+    }
 
-        }
+    .card-title {
+        margin-bottom: 18px;
+        color: var(--admin-muted);
+        font-size: 15px;
+        font-weight: 600;
+    }
 
-        .topbar-right {
+    .card-number {
+        color: var(--admin-navy);
+        font-size: clamp(25px, 3vw, 42px);
+        font-weight: 800;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
 
-            display: flex;
+    .card-link {
+        display: inline-block;
+        margin-top: 20px;
+        color: #8a682b;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+    }
 
-            align-items: center;
+    .card-link:hover {
+        color: var(--admin-navy);
+        text-decoration: underline;
+    }
 
-            gap: 15px;
-
-        }
-
-        .topbar a {
-
-            color: #ffffff;
-
-            text-decoration: none;
-
-        }
-
-        .logout-btn {
-
-            border: 1px solid #8293a3;
-
-            padding: 10px 20px;
-
-            border-radius: 6px;
-
-        }
-
-        .logout-btn:hover {
-
-            background: #173653;
-
+    @media (max-width: 950px) {
+        .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .container {
+            padding: 30px 20px;
+        }
+    }
 
-            max-width: 1200px;
-
-            margin: auto;
-
-            padding: 40px 20px;
-
+    @media (max-width: 600px) {
+        .topbar {
+            padding: 16px 18px;
         }
 
-        .welcome {
-
-            margin-bottom: 30px;
-
+        .logo {
+            font-size: 20px;
         }
 
-        .welcome h1 {
-
-            margin-bottom: 8px;
-
-            font-size: 38px;
-
+        .container {
+            padding: 25px 15px;
         }
-
-        .welcome p {
-
-            color: #687681;
-
-            font-size: 18px;
-
-        }
-
-        /* NAVIGATION */
 
         .admin-nav {
-
-            background: #ffffff;
-
-            padding: 15px 20px;
-
-            border-radius: 10px;
-
-            margin-bottom: 30px;
-
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-
-            display: flex;
-
-            gap: 10px;
-
-            flex-wrap: wrap;
-
+            padding: 10px;
+            gap: 6px;
         }
 
         .admin-nav a {
-
-            display: inline-block;
-
-            padding: 11px 18px;
-
-            border-radius: 6px;
-
-            text-decoration: none;
-
-            color: #10253d;
-
-            font-weight: 700;
-
+            padding: 10px 11px;
+            font-size: 13px;
         }
-
-        .admin-nav a:hover {
-
-            background: #eef2f5;
-
-        }
-
-        .admin-nav a.active {
-
-            background: #10253d;
-
-            color: #ffffff;
-
-        }
-
-        /* DASHBOARD CARDS */
 
         .cards {
-
-            display: grid;
-
-            grid-template-columns: repeat(3, 1fr);
-
-            gap: 30px;
-
+            grid-template-columns: 1fr;
+            gap: 16px;
         }
 
         .card {
-
-            background: #ffffff;
-
-            padding: 40px;
-
-            border-radius: 14px;
-
-            box-shadow:
-
-                0 5px 25px
-
-                rgba(0,0,0,0.05);
-
+            padding: 24px;
         }
-
-        .card-title {
-
-            color: #687681;
-
-            font-size: 17px;
-
-            margin-bottom: 20px;
-
-        }
-
-        .card-number {
-
-            font-size: 48px;
-
-            font-weight: 700;
-
-            color: #10253d;
-
-        }
-
-        .card-link {
-
-            display: inline-block;
-
-            margin-top: 20px;
-
-            color: #10253d;
-
-            font-weight: 700;
-
-            text-decoration: none;
-
-        }
-
-        .card-link:hover {
-
-            text-decoration: underline;
-
-        }
-
-        @media (max-width: 800px) {
-
-            .cards {
-
-                grid-template-columns: 1fr;
-
-            }
-
-            .welcome h1 {
-
-                font-size: 30px;
-
-            }
-
-            .topbar {
-
-                padding: 15px 20px;
-
-            }
-
-        }
-
+    }
+</style>
     </style>
 
 </head>

@@ -169,17 +169,62 @@
 
                 <article class="service-card">
 
-                    <div class="service-image">
+               
+<?php
+$imageStmt = $pdo->prepare("
+    SELECT image_path
+    FROM service_images
+    WHERE service_id = ?
+      AND status = 1
+    ORDER BY sort_order ASC, id ASC
+    LIMIT 1
+");
 
-                        <div class="service-image-placeholder">
+$imageStmt->execute([$service['id']]);
+$galleryImage = $imageStmt->fetchColumn();
 
-                            <span>
-                                <?php echo htmlspecialchars($service['service_name']); ?>
-                            </span>
+$displayImage = '';
 
-                        </div>
+if (!empty($service['main_image'])) {
+    $mainImageFile = __DIR__ . '/' .
+        ltrim($service['main_image'], '/');
 
-                    </div>
+    if (is_file($mainImageFile)) {
+        $displayImage = $service['main_image'];
+    }
+}
+
+if ($displayImage === '' && !empty($galleryImage)) {
+    $galleryImageFile = __DIR__ . '/' .
+        ltrim($galleryImage, '/');
+
+    if (is_file($galleryImageFile)) {
+        $displayImage = $galleryImage;
+    }
+}
+?>
+
+<div class="service-image">
+
+    <?php if ($displayImage !== ''): ?>
+
+        <img
+            src="<?php echo htmlspecialchars($displayImage); ?>"
+            alt="<?php echo htmlspecialchars($service['service_name']); ?>"
+            loading="lazy"
+        >
+
+    <?php else: ?>
+
+        <div class="service-image-placeholder">
+            <span>
+                <?php echo htmlspecialchars($service['service_name']); ?>
+            </span>
+        </div>
+
+    <?php endif; ?>
+
+</div>
 
 
                     <div class="service-content">
