@@ -3,16 +3,13 @@
 session_start();
 
 if (!isset($_SESSION['admin_id'])) {
-
     header("Location: login.php");
-
     exit;
 }
 
 require_once "../config/database.php";
 
-
-/* FORM VALUES */
+/* INITIALIZE FORM VARIABLES */
 
 $name = '';
 $mobile = '';
@@ -21,9 +18,19 @@ $address = '';
 $city = '';
 $state = '';
 $pincode = '';
-
 $error = '';
 
+
+/* INITIALIZE FORM VARIABLES */
+
+$name = '';
+$mobile = '';
+$email = '';
+$address = '';
+$city = '';
+$state = '';
+$pincode = '';
+$error = '';
 
 /* SAVE CUSTOMER */
 
@@ -37,73 +44,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $state = trim($_POST['state'] ?? '');
     $pincode = trim($_POST['pincode'] ?? '');
 
-
-    /* VALIDATION */
+    /* SERVER-SIDE VALIDATION */
 
     if ($name === '') {
-
         $error = "Customer name is required.";
 
-    } elseif ($mobile === '') {
+    } elseif (
+        !preg_match("/^[\p{L}\p{M} .'-]{2,100}$/u", $name)
+    ) {
+        $error = "Enter a valid customer name (2–100 characters).";
 
-        $error = "Mobile number is required.";
+    } elseif (!preg_match('/^[6-9][0-9]{9}$/', $mobile)) {
+        $error = "Enter a valid 10-digit Indian mobile number.";
+
+    } elseif (
+        $email !== '' &&
+        (!filter_var($email, FILTER_VALIDATE_EMAIL) ||
+         strlen($email) > 254)
+    ) {
+        $error = "Enter a valid email address.";
+
+    } elseif (strlen($address) > 500) {
+        $error = "Address must not exceed 500 characters.";
+
+    } elseif (
+        $city !== '' &&
+        !preg_match("/^[\p{L}\p{M} .'-]{1,100}$/u", $city)
+    ) {
+        $error = "Enter a valid city name.";
+
+    } elseif (
+        $state !== '' &&
+        !preg_match("/^[\p{L}\p{M} .'-]{1,100}$/u", $state)
+    ) {
+        $error = "Enter a valid state name.";
+
+    } elseif (
+        $pincode !== '' &&
+        !preg_match('/^[0-9]{6}$/', $pincode)
+    ) {
+        $error = "Pincode must contain exactly 6 digits.";
 
     } else {
-
         try {
 
-            /* INSERT CUSTOMER */
+            /* CHECK DUPLICATE MOBILE */
 
             $stmt = $pdo->prepare("
-                INSERT INTO customers
-                (
-                    name,
-                    mobile,
-                    email,
-                    address,
-                    city,
-                    state,
-                    pincode
-                )
-                VALUES
-                (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?
-                )
+                SELECT id
+                FROM customers
+                WHERE mobile = ?
+                LIMIT 1
             ");
 
-            $stmt->execute([
-                $name,
-                $mobile,
-                $email !== '' ? $email : null,
-                $address !== '' ? $address : null,
-                $city !== '' ? $city : null,
-                $state !== '' ? $state : null,
-                $pincode !== '' ? $pincode : null
-            ]);
+            $stmt->execute([$mobile]);
 
+            if ($stmt->fetch()) {
 
-            /* SUCCESS */
+                $error = "This mobile number already exists.";
 
-            header("Location: customers.php");
+            } else {
 
-            exit;
+                /* INSERT CUSTOMER */
 
+                $stmt = $pdo->prepare("
+                    INSERT INTO customers
+                        (name, mobile, email, address, city, state, pincode)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+
+                $stmt->execute([
+                    $name,
+                    $mobile,
+                    $email !== '' ? $email : null,
+                    $address !== '' ? $address : null,
+                    $city !== '' ? $city : null,
+                    $state !== '' ? $state : null,
+                    $pincode !== '' ? $pincode : null
+                ]);
+
+                header("Location: customers.php");
+                exit;
+            }
 
         } catch (PDOException $e) {
 
+            error_log("Customer creation failed: " . $e->getMessage());
             $error = "Unable to save customer. Please try again.";
 
         }
-
     }
-
 }
+
+
 
 ?>
 
@@ -592,6 +625,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         value="<?php echo htmlspecialchars($name); ?>"
                         placeholder="Enter customer name"
                         required
+                        minlength="2" maxlength="100" required
                     >
 
                 </div>
@@ -615,6 +649,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         value="<?php echo htmlspecialchars($mobile); ?>"
                         placeholder="Enter mobile number"
                         required
+                        inputmode="numeric" 
+                        pattern="[6-9][0-9]{9}" 
+                        maxlength="10" minlength="10" required
                     >
 
                 </div>
@@ -633,6 +670,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         name="email"
                         value="<?php echo htmlspecialchars($email); ?>"
                         placeholder="Enter email address"
+                        maxlength="254"
                     >
 
                 </div>
@@ -651,6 +689,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         name="city"
                         value="<?php echo htmlspecialchars($city); ?>"
                         placeholder="Enter city"
+                        maxlength="100"
                     >
 
                 </div>
@@ -669,6 +708,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         name="state"
                         value="<?php echo htmlspecialchars($state); ?>"
                         placeholder="Enter state"
+                        maxlength="100"
                     >
 
                 </div>
@@ -687,6 +727,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         name="pincode"
                         value="<?php echo htmlspecialchars($pincode); ?>"
                         placeholder="Enter pincode"
+                        inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6"
                     >
 
                 </div>
@@ -703,6 +744,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <textarea
                         name="address"
                         placeholder="Enter customer address"
+                        maxlength="500"
                     ><?php echo htmlspecialchars($address); ?></textarea>
 
                 </div>

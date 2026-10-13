@@ -680,12 +680,16 @@ $total_customers = $stmt->fetchColumn();
                         Search Customer
                     </label>
 
-                    <input
-                        type="text"
-                        name="search"
-                        value="<?php echo htmlspecialchars($search); ?>"
-                        placeholder="Name, mobile, email, city or state"
-                    >
+                    
+<input
+    type="text"
+    id="customerSearch"
+    name="search"
+    value="<?php echo htmlspecialchars($search); ?>"
+    placeholder="Name, mobile, email, city or state"
+    autocomplete="off"
+>
+
 
                 </div>
 
@@ -921,6 +925,37 @@ $total_customers = $stmt->fetchColumn();
 
 
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('customerSearch');
+    let timer;
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function () {
+        clearTimeout(timer);
+
+        timer = setTimeout(function () {
+            const params = new URLSearchParams(window.location.search);
+            const value = searchInput.value.trim();
+
+            if (value) {
+                params.set('search', value);
+            } else {
+                params.delete('search');
+            }
+
+            const query = params.toString();
+            const url = window.location.pathname +
+                (query ? '?' + query : '');
+
+            window.location.href = url;
+        }, 350);
+    });
+});
+</script>
 
 
 </body>

@@ -96,77 +96,224 @@ $stmt->execute($serviceParams);
 $serviceReports = $stmt->fetchAll();
 
 /* Leads by source */
+list($sourceDateFilter, $sourceParams) =
+    buildLeadDateFilter(
+        $start_date,
+        $end_date,
+        'l.created_at'
+    );
+
 $stmt = $pdo->prepare("
-    SELECT ls.source_name, COUNT(l.id) AS total
+    SELECT
+        ls.source_name,
+        COUNT(l.id) AS total
     FROM lead_sources ls
     LEFT JOIN leads l
-        ON l.source_id = ls.id $serviceDateFilter
+        ON l.source_id = ls.id
+        $sourceDateFilter
     GROUP BY ls.id, ls.source_name
     ORDER BY total DESC, ls.source_name ASC
 ");
-$stmt->execute($serviceParams);
-$sourceReports = $stmt->fetchAll();
 
-/* Chart helper: avoid division by zero */
-function chartMaximum($rows)
+$stmt->execute($sourceParams);
+$sourceReports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+/* SMART REPORT CHARTS */
+
+function reportColors()
 {
-    $maximum = 0;
-
-    foreach ($rows as $row) {
-        $maximum = max($maximum, (int)$row['total']);
-    }
-
-    return max(1, $maximum);
+    return [
+        '#3478f6',
+        '#36bd8b',
+        '#ff850d',
+        '#9b5cf6',
+        '#20aaa4',
+        '#ef4444',
+        '#8998ad',
+        '#eab308',
+        '#ec4899'
+    ];
 }
 
-/* Render a responsive horizontal bar chart */
 function renderChart($title, $rows, $labelKey, $emptyMessage)
 {
-    $maximum = chartMaximum($rows);
+    $colors = reportColors();
+    $total = 0;
+
+    foreach ($rows as $row) {
+        $total += (int)$row['total'];
+    }
+
+    $segments = [];
+    $legend = [];
+    $offset = 0;
+    $index = 0;
+
+    foreach ($rows as $row) {
+        $count = (int)$row['total'];
+        $percentage = $total > 0
+            ? ($count / $total) * 100
+            : 0;
+
+        $color = $colors[$index % count($colors)];
+
+        $segments[] = $color . ' ' .
+            round($offset, 2) . '% ' .
+            round($offset + $percentage, 2) . '%';
+
+        $offset += $percentage;
+
+        $legend[] = [
+            'label' => (string)$row[$labelKey],
+            'total' => $count,
+            'percentage' => $percentage,
+            'color' => $color
+        ];
+
+        $index++;
+    }
+
+    $gradient = $total > 0
+        ? 'conic-gradient(' . implode(', ', $segments) . ')'
+        : 'conic-gradient(#e8edf5 0% 100%)';
+
+    $icons = [
+        'Leads by Status' => 'chart-column',
+        'Leads by Service' => 'wrench',
+        'Leads by Source' => 'megaphone'
+    ];
+
+    $descriptions = [
+        'Leads by Status' =>
+            'Distribution of leads by current status',
+        'Leads by Service' =>
+            'Distribution of leads by service type',
+        'Leads by Source' =>
+            'Distribution of leads by source channel'
+    ];
     ?>
-    <section class="report-section chart-section">
-        <h2><?php echo htmlspecialchars($title); ?></h2>
+    
 
-        <?php if (empty($rows)): ?>
-            <p class="empty-message">
-                <?php echo htmlspecialchars($emptyMessage); ?>
-            </p>
-        <?php else: ?>
-            <div class="chart-list">
-                <?php foreach ($rows as $row): ?>
-                    <?php
-                    $label = (string)$row[$labelKey];
-                    $total = (int)$row['total'];
-                    $width = ($total / $maximum) * 100;
-                    ?>
-                    <div class="chart-row">
-                        <div class="chart-label-line">
-                            <span class="chart-label">
-                                <?php echo htmlspecialchars($label); ?>
-                            </span>
-                            <strong><?php echo $total; ?></strong>
-                        </div>
+    <section class="smart-report-card">
 
-                        <div class="bar-track">
-                            <div
-                                class="bar-fill"
-                                style="width: <?php echo $width; ?>%;"
-                                role="img"
-                                aria-label="<?php
-                                    echo htmlspecialchars(
-                                        $label . ': ' . $total . ' leads'
-                                    );
-                                ?>"
-                            ></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+        <div class="smart-card-heading">
+
+            <div class="smart-icon <?php
+                echo htmlspecialchars(
+                    strtolower(str_replace(' ', '-', $title))
+                );
+            ?>">
+                <?php
+                echo htmlspecialchars($icons[$title] ?? 'chart-column');
+                ?>
             </div>
+
+            <div class="smart-heading-text">
+                <h2><?php echo htmlspecialchars($title); ?></h2>
+
+                <p>
+                    <?php
+                    echo htmlspecialchars(
+                        $descriptions[$title] ?? ''
+                    );
+                    ?>
+                </p>
+            </div>
+
+        </div>
+
+        <?php if ($total === 0): ?>
+
+            <div class="smart-empty">
+                <?php echo htmlspecialchars($emptyMessage); ?>
+            </div>
+
+        <?php else: ?>
+
+            <div class="smart-chart-layout">
+
+                <div
+                    class="smart-donut"
+                    style="--donut-gradient: <?php
+                        echo htmlspecialchars($gradient);
+                    ?>;"
+                    role="img"
+                    aria-label="<?php
+                        echo htmlspecialchars($title . ': ' . $total . ' leads');
+                    ?>"
+                >
+                    <div class="smart-donut-center">
+                        <span>Total</span>
+                        <strong><?php echo $total; ?></strong>
+                    </div>
+                </div>
+
+                <div class="smart-legend">
+
+                    <?php foreach ($legend as $item): ?>
+
+                        <div class="smart-legend-row">
+
+                            <span
+                                class="smart-dot"
+                                style="--item-color: <?php
+                                    echo htmlspecialchars($item['color']);
+                                ?>;"
+                            ></span>
+
+                            <span class="smart-legend-label">
+                                <?php
+                                echo htmlspecialchars($item['label']);
+                                ?>
+                            </span>
+
+                            <div class="smart-progress">
+                                <div
+                                    class="smart-progress-fill"
+                                    style="
+                                        width: <?php
+                                            echo round(
+                                                $item['percentage'],
+                                                2
+                                            );
+                                        ?>%;
+                                        --item-color: <?php
+                                            echo htmlspecialchars(
+                                                $item['color']
+                                            );
+                                        ?>;
+                                    "
+                                ></div>
+                            </div>
+
+                            <strong class="smart-count">
+                                <?php echo $item['total']; ?>
+                            </strong>
+
+                            <span class="smart-percent">
+                                <?php
+                                echo round($item['percentage']);
+                                ?>%
+                            </span>
+
+                        </div>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+            </div>
+
         <?php endif; ?>
+
     </section>
+
     <?php
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -174,243 +321,18 @@ function renderChart($title, $rows, $labelKey, $emptyMessage)
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Lead Reports</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            padding: 25px;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #263238;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 25px;
-        }
-
-        h1 {
-            margin: 0 0 8px;
-        }
-
-        .subtitle {
-            color: #687782;
-            margin: 0;
-        }
-
-        .back-btn {
-            display: inline-block;
-            padding: 11px 16px;
-            background: #1769aa;
-            color: white;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-
-        .summary-card,
-        .report-section,
-        .date-filter-form {
-            background: white;
-            padding: 22px;
-            margin-bottom: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px #0000000b;
-        }
-
-        .summary-card {
-            border-left: 5px solid #1769aa;
-        }
-
-        .summary-card p {
-            color: #687782;
-            margin: 0 0 10px;
-        }
-
-        .summary-card strong {
-            font-size: 32px;
-        }
-
-        .report-section h2 {
-            margin-top: 0;
-            font-size: 21px;
-        }
-
-        .date-filter-form {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: end;
-            gap: 15px;
-        }
-
-        .date-field {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
-
-        .date-field label {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .date-field input {
-            padding: 10px;
-            border: 1px solid #ccd4da;
-            border-radius: 5px;
-        }
-
-        .date-filter-form button {
-            padding: 11px 18px;
-            background: #1769aa;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .reset-filter {
-            display: inline-block;
-            padding: 11px 14px;
-            color: #1769aa;
-            text-decoration: none;
-            border: 1px solid #1769aa;
-            border-radius: 5px;
-        }
-
-        .date-error {
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            background: #fde8e7;
-            color: #a12622;
-            border: 1px solid #f5c2c0;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .table-wrap {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 350px;
-        }
-
-        th, td {
-            padding: 13px;
-            text-align: left;
-            border-bottom: 1px solid #e9edf0;
-        }
-
-        th {
-            background: #f6f8fa;
-        }
-
-        .count {
-            font-weight: bold;
-            color: #1769aa;
-        }
-
-        .empty-message {
-            padding: 14px;
-            color: #687782;
-            background: #f7f9fb;
-            border-radius: 6px;
-        }
-
-        /* Chart styles */
-        .chart-section {
-            overflow: hidden;
-        }
-
-        .chart-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .chart-row {
-            width: 100%;
-            min-width: 0;
-        }
-
-        .chart-label-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 8px;
-        }
-
-        .chart-label {
-            overflow-wrap: anywhere;
-            font-size: 14px;
-        }
-
-        .chart-label-line strong {
-            color: #1769aa;
-            flex-shrink: 0;
-        }
-
-        .bar-track {
-            width: 100%;
-            height: 16px;
-            background: #eaf0f5;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            min-width: 0;
-            background: #1769aa;
-            border-radius: 10px;
-            transition: width 0.3s ease;
-        }
-
-        .chart-section:nth-of-type(2) .bar-fill {
-            background: #159578;
-        }
-
-        @media (max-width: 600px) {
-            body {
-                padding: 14px;
-            }
-
-            .summary-card,
-            .report-section,
-            .date-filter-form {
-                padding: 15px;
-            }
-
-            .date-field {
-                width: 100%;
-            }
-
-            .date-field input {
-                width: 100%;
-            }
-
-            .date-filter-form button,
-            .date-filter-form .reset-filter {
-                text-align: center;
-            }
-        }
-    </style>
+<link
+    rel="stylesheet"
+    href="assets/css/admin-style.css?v=2"
+>
+   
 </head>
 
-<body>
+<body class="admin-page">
+    
+<div class="reports-container">
 
-<div class="page-header">
+    <div class="reports-header">
     <div>
         <h1>Reports</h1>
         <p class="subtitle">
@@ -477,29 +399,32 @@ function renderChart($title, $rows, $labelKey, $emptyMessage)
 </div>
 
 <!-- Charts -->
-<?php
-renderChart(
-    'Leads by Status',
-    $statusReports,
-    'status',
-    'No lead records found.'
-);
+<div class="smart-reports-grid">
 
-renderChart(
-    'Leads by Service',
-    $serviceReports,
-    'service_name',
-    'No services found.'
-);
+    <?php
+    renderChart(
+        'Leads by Status',
+        $statusReports,
+        'status',
+        'No lead records found.'
+    );
 
-renderChart(
-    'Leads by Source',
-    $sourceReports,
-    'source_name',
-    'No lead sources found.'
-);
-?>
+    renderChart(
+        'Leads by Service',
+        $serviceReports,
+        'service_name',
+        'No services found.'
+    );
 
+    renderChart(
+        'Leads by Source',
+        $sourceReports,
+        'source_name',
+        'No lead sources found.'
+    );
+    ?>
+
+</div>
 <!-- Existing detailed report tables -->
 
 <section class="report-section">
@@ -598,6 +523,6 @@ renderChart(
         </div>
     <?php endif; ?>
 </section>
-
+</div>
 </body>
 </html>
