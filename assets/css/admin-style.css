@@ -1272,7 +1272,7 @@ body {
     }
 }
 
-```css
+
 /* SERVICES PAGE FINAL STYLE */
 body.admin-page .summary {
     display: grid !important;
@@ -1332,4 +1332,45 @@ body.admin-page .service-actions .action-faqs {
         grid-template-columns: 1fr !important;
     }
 }
-```
+
+
+/* Lead filters: compact search and export actions */
+.filter-grid .form-group:first-child input[name="search"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-grid .filter-action {
+    display: flex;
+    align-items: flex-end;
+    min-width: 0;
+}
+
+.filter-grid .filter-action .btn {
+    white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.btn-export-excel {
+    background: #16804a;
+    color: #ffffff;
+    border: 1px solid #16804a;
+    text-decoration: none;
+}
+
+.btn-export-excel:hover {
+    background: #11663b;
+    color: #ffffff;
+}
+
+@media (min-width: 769px) {
+    .filter-grid .form-group:first-child {
+        min-width: 0;
+    }
+
+    .filter-grid .form-group:first-child input[name="search"] {
+        max-width: 210px;
+    }
+}

@@ -12,6 +12,53 @@ if (!isset($_SESSION['admin_id'])) {
 require_once "../config/database.php";
 
 
+/* LIVE CUSTOMER SUGGESTIONS */
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'customer_suggestions') {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    $term = trim($_GET['q'] ?? '');
+
+    if ($term === '' || mb_strlen($term) < 1) {
+        echo json_encode([]);
+        exit;
+    }
+
+    $suggestionSql = "
+        SELECT id, name, mobile, email, city, state
+        FROM customers
+        WHERE name LIKE ?
+           OR mobile LIKE ?
+           OR email LIKE ?
+           OR city LIKE ?
+           OR state LIKE ?
+        ORDER BY
+            CASE WHEN name LIKE ? THEN 0 ELSE 1 END,
+            name ASC
+        LIMIT 10
+    ";
+
+    $like = '%' . $term . '%';
+    $nameStartsWith = $term . '%';
+
+    $suggestionStmt = $pdo->prepare($suggestionSql);
+    $suggestionStmt->execute([
+        $like,
+        $like,
+        $like,
+        $like,
+        $like,
+        $nameStartsWith
+    ]);
+
+    echo json_encode(
+        $suggestionStmt->fetchAll(PDO::FETCH_ASSOC),
+        JSON_UNESCAPED_UNICODE
+    );
+    exit;
+}
+
+
+
 /* SEARCH */
 
 $search = trim($_GET['search'] ?? '');
@@ -579,6 +626,100 @@ $total_customers = $stmt->fetchColumn();
 
         }
 
+        
+/* Search layout and Excel export */
+.filter-grid {
+    grid-template-columns: minmax(220px, 1fr) auto auto;
+}
+
+.customer-search-group {
+    position: relative;
+    min-width: 0;
+}
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-excel {
+    background: #16804a;
+    color: #fff;
+}
+
+.btn-excel:hover {
+    background: #11683b;
+}
+
+.customer-suggestions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid #d9e0e6;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.customer-suggestion {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    text-align: left;
+    background: #fff;
+    border: 0;
+    border-bottom: 1px solid #edf0f2;
+    cursor: pointer;
+    font: inherit;
+    color: #263746;
+}
+
+.customer-suggestion:last-child {
+    border-bottom: 0;
+}
+
+.customer-suggestion:hover,
+.customer-suggestion:focus {
+    background: #f1f5fb;
+    outline: none;
+}
+
+.customer-suggestion strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #10253d;
+}
+
+.customer-suggestion small {
+    display: block;
+    color: #687681;
+    overflow-wrap: anywhere;
+}
+
+.customer-suggestion-empty {
+    padding: 13px;
+    color: #687681;
+    font-size: 13px;
+}
+
+@media (max-width: 800px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        align-items: stretch;
+    }
+}
+
+
     </style>
 
 </head>
@@ -674,26 +815,24 @@ $total_customers = $stmt->fetchColumn();
             <div class="filter-grid">
 
 
-                <div class="form-group">
+                <div class="form-group customer-search-group">
+    <label for="customerSearch">Search Customer</label>
 
-                    <label>
-                        Search Customer
-                    </label>
+    <input
+        type="text"
+        id="customerSearch"
+        name="search"
+        value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>"
+        placeholder="Name, mobile, email, city or state"
+        autocomplete="off"
+    >
 
-                    
-<input
-    type="text"
-    id="customerSearch"
-    name="search"
-    value="<?php echo htmlspecialchars($search); ?>"
-    placeholder="Name, mobile, email, city or state"
-    autocomplete="off"
->
-
-
-                </div>
-
-
+    <div
+        id="customerSuggestions"
+        class="customer-suggestions"
+        role="listbox"
+    ></div>
+</div>
                 <div>
 
                     <button
@@ -706,17 +845,18 @@ $total_customers = $stmt->fetchColumn();
                 </div>
 
 
-                <div>
+               <div class="filter-actions">
+    <a href="customers.php" class="btn btn-clear">
+        Clear
+    </a>
 
-                    <a
-                        href="customers.php"
-                        class="btn btn-clear"
-                    >
-                        Clear
-                    </a>
-
-                </div>
-
+    <a
+        href="export-customer-excel.php?search=<?php echo urlencode($search); ?>"
+        class="btn btn-excel"
+    >
+        Export Excel
+    </a>
+</div>
 
             </div>
 
@@ -928,33 +1068,164 @@ $total_customers = $stmt->fetchColumn();
 
 
 <script>
+
 document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('customerSearch');
-    let timer;
+    const input = document.getElementById('customerSearch');
+    const suggestions = document.getElementById('customerSuggestions');
 
-    if (!searchInput) return;
+    if (!input || !suggestions) return;
 
-    searchInput.addEventListener('input', function () {
-        clearTimeout(timer);
+    let timer = null;
+    let requestController = null;
+    let activeIndex = -1;
+    let currentItems = [];
 
-        timer = setTimeout(function () {
-            const params = new URLSearchParams(window.location.search);
-            const value = searchInput.value.trim();
+    function hideSuggestions() {
+        suggestions.style.display = 'none';
+        suggestions.innerHTML = '';
+        currentItems = [];
+        activeIndex = -1;
+    }
 
-            if (value) {
-                params.set('search', value);
-            } else {
-                params.delete('search');
+    function selectCustomer(item) {
+        input.value = item.name || item.mobile || '';
+        hideSuggestions();
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('search', input.value);
+        window.location.href = url.toString();
+    }
+
+    function renderSuggestions(items) {
+        suggestions.innerHTML = '';
+        currentItems = items;
+        activeIndex = -1;
+
+        if (!items.length) {
+            suggestions.innerHTML =
+                '<div class="customer-suggestion-empty">No matching customers found.</div>';
+            suggestions.style.display = 'block';
+            return;
+        }
+
+        items.forEach(function (item, index) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'customer-suggestion';
+            button.setAttribute('role', 'option');
+
+            const name = document.createElement('strong');
+            name.textContent = item.name || 'Unnamed customer';
+
+            const details = document.createElement('small');
+            details.textContent = [
+                item.mobile,
+                item.email,
+                item.city,
+                item.state
+            ].filter(Boolean).join(' · ');
+
+            button.appendChild(name);
+            button.appendChild(details);
+
+            button.addEventListener('mousedown', function (event) {
+                event.preventDefault();
+                selectCustomer(item);
+            });
+
+            suggestions.appendChild(button);
+        });
+
+        suggestions.style.display = 'block';
+    }
+
+    async function fetchSuggestions() {
+        const term = input.value.trim();
+
+        if (!term) {
+            hideSuggestions();
+            return;
+        }
+
+        if (requestController) {
+            requestController.abort();
+        }
+
+        requestController = new AbortController();
+
+        try {
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.searchParams.set('ajax', 'customer_suggestions');
+            url.searchParams.set('q', term);
+
+            const response = await fetch(url.toString(), {
+                headers: { 'Accept': 'application/json' },
+                signal: requestController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error('Suggestion request failed');
             }
 
-            const query = params.toString();
-            const url = window.location.pathname +
-                (query ? '?' + query : '');
+            const items = await response.json();
 
-            window.location.href = url;
-        }, 350);
+            if (input.value.trim() === term) {
+                renderSuggestions(items);
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                hideSuggestions();
+            }
+        }
+    }
+
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(fetchSuggestions, 250);
+    });
+
+    input.addEventListener('keydown', function (event) {
+        const buttons = suggestions.querySelectorAll('.customer-suggestion');
+
+        if (suggestions.style.display !== 'block' || !buttons.length) {
+            return;
+        }
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            activeIndex = (activeIndex + 1) % buttons.length;
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            activeIndex = (activeIndex - 1 + buttons.length) % buttons.length;
+        } else if (event.key === 'Enter' && activeIndex >= 0) {
+            event.preventDefault();
+            selectCustomer(currentItems[activeIndex]);
+            return;
+        } else if (event.key === 'Escape') {
+            hideSuggestions();
+            return;
+        } else {
+            return;
+        }
+
+        buttons.forEach(function (button, index) {
+            button.style.background =
+                index === activeIndex ? '#f1f5fb' : '#fff';
+        });
+    });
+
+    input.addEventListener('blur', function () {
+        setTimeout(hideSuggestions, 150);
+    });
+
+    input.addEventListener('focus', function () {
+        if (input.value.trim()) {
+            fetchSuggestions();
+        }
     });
 });
+
 </script>
 
 

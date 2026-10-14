@@ -390,13 +390,27 @@ $new_leads = $stmt->fetchColumn();
                         Search
                     </label>
 
-                    <input
-                        type="text"
-                        name="search"
-                        value="<?php echo htmlspecialchars($search); ?>"
-                        placeholder="Name, mobile or email"
-                    >
+<div class="live-search-wrapper">
 
+    <input
+        type="text"
+        id="leadLiveSearch"
+        name="search"
+        value="<?php echo htmlspecialchars($search); ?>"
+        placeholder="Name, mobile or email"
+        autocomplete="off"
+        aria-autocomplete="list"
+        aria-controls="leadSearchSuggestions"
+        aria-expanded="false"
+    >
+
+    <div
+        id="leadSearchSuggestions"
+        class="lead-search-suggestions"
+        role="listbox"
+    ></div>
+
+</div>
                 </div>
 
 
@@ -566,17 +580,43 @@ $new_leads = $stmt->fetchColumn();
 
                 <!-- CLEAR -->
 
-                <div>
+             <!-- CLEAR -->
 
-                    <a
-                        href="leads.php"
-                        class="btn btn-clear"
-                    >
-                        Clear
-                    </a>
+<div class="filter-action">
 
-                </div>
+    <a
+        href="leads.php"
+        class="btn btn-clear"
+    >
+        Clear
+    </a>
 
+</div>
+
+<!-- EXPORT EXCEL -->
+
+<div class="filter-action">
+
+    <a
+        href="export-excel-leads.php?<?php
+            echo htmlspecialchars(
+                http_build_query([
+                    'search' => $search,
+                    'status' => $status_filter,
+                    'service_id' => $service_filter,
+                    'source_id' => $source_filter,
+                    'conversion' => $conversion_filter
+                ]),
+                ENT_QUOTES,
+                'UTF-8'
+            );
+        ?>"
+        class="btn btn-excel"
+    >
+        Export Excel
+    </a>
+
+</div>
 
             </div>
 
@@ -978,5 +1018,149 @@ $new_leads = $stmt->fetchColumn();
 
 
 </body>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('leadLiveSearch');
+    const dropdown = document.getElementById('leadSearchSuggestions');
+
+    if (!input || !dropdown) return;
+
+    let debounceTimer;
+    let activeController = null;
+
+    function closeSuggestions() {
+        dropdown.classList.remove('show');
+        dropdown.replaceChildren();
+        input.setAttribute('aria-expanded', 'false');
+    }
+
+    function showMessage(message) {
+        dropdown.replaceChildren();
+
+        const item = document.createElement('div');
+        item.className = 'lead-suggestion-message';
+        item.textContent = message;
+
+        dropdown.appendChild(item);
+        dropdown.classList.add('show');
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    function addText(parent, className, text) {
+        const element = document.createElement('span');
+        element.className = className;
+        element.textContent = text || '';
+        parent.appendChild(element);
+    }
+
+    function displaySuggestions(results) {
+        dropdown.replaceChildren();
+
+        if (!results.length) {
+            showMessage('No matching leads found.');
+            return;
+        }
+
+        results.forEach(function (lead) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'lead-suggestion-item';
+            button.setAttribute('role', 'option');
+
+            addText(
+                button,
+                'lead-suggestion-name',
+                lead.name || 'Unnamed lead'
+            );
+
+            const details = [
+                lead.mobile || '',
+                lead.email || ''
+            ].filter(Boolean).join(' · ');
+
+            addText(
+                button,
+                'lead-suggestion-details',
+                details
+            );
+
+            button.addEventListener('click', function () {
+                input.value = lead.name || lead.mobile || lead.email || '';
+                closeSuggestions();
+                input.focus();
+            });
+
+            dropdown.appendChild(button);
+        });
+
+        dropdown.classList.add('show');
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    input.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+
+        if (activeController) {
+            activeController.abort();
+            activeController = null;
+        }
+
+        const term = input.value.trim();
+
+        if (term.length < 2) {
+            closeSuggestions();
+            return;
+        }
+
+        debounceTimer = setTimeout(async function () {
+            activeController = new AbortController();
+
+            try {
+                const response = await fetch(
+                    'lead-search-suggestions.php?q=' +
+                    encodeURIComponent(term),
+                    {
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        signal: activeController.signal
+                    }
+                );
+
+                if (!response.ok) {
+                    showMessage('Unable to load suggestions.');
+                    return;
+                }
+
+                const results = await response.json();
+
+                // Ignore results if the user has typed something newer.
+                if (input.value.trim() !== term) return;
+
+                displaySuggestions(results);
+
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    showMessage('Unable to load suggestions.');
+                }
+            }
+        }, 250);
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.live-search-wrapper')) {
+            closeSuggestions();
+        }
+    });
+
+    input.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeSuggestions();
+        }
+    });
+});
+</script>
 
 </html>

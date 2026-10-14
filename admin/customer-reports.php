@@ -164,321 +164,520 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Reports</title>
+
+    <title>Customer Reports | YourDreamHome</title>
+
+    <link rel="stylesheet" href="assets/css/admin-style.css?v=2">
 
     <style>
-        * {
-            box-sizing: border-box;
+        /* Customer Reports - match the main Reports page */
+
+        .customer-reports-container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 28px;
         }
 
-        body {
-            margin: 0;
-            padding: 25px;
-            background: #f4f6f9;
-            color: #263238;
-            font-family: Arial, sans-serif;
-        }
-
-        .page-header {
+        .customer-reports-container .reports-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
+            gap: 18px;
+            margin-bottom: 26px;
         }
 
-        h1 {
+        .customer-reports-container .reports-header h1 {
             margin: 0 0 8px;
+            color: #101d35;
+            font-size: 30px;
+            font-weight: 800;
         }
 
-        .subtitle {
+        .customer-reports-container .subtitle {
             margin: 0;
-            color: #687782;
+            color: #68758a;
         }
 
-        .button {
-            display: inline-block;
-            padding: 11px 15px;
-            border: 1px solid #1769aa;
-            border-radius: 5px;
+        .customer-reports-container .back-btn,
+        .customer-reports-container .report-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 11px 17px;
+            border: 1px solid #d9e2ef;
+            border-radius: 9px;
+            background: #ffffff;
+            color: #101d35;
+            font-weight: 700;
             text-decoration: none;
-            color: #1769aa;
-            background: white;
+            cursor: pointer;
+            transition: 0.2s ease;
         }
 
-        .primary {
-            color: white;
-            background: #1769aa;
+        .customer-reports-container .back-btn {
+            background: #101d35;
+            border-color: #101d35;
+            color: #ffffff;
         }
 
-        .filter-form,
-        .summary-card,
-        .report-section {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 22px;
-            box-shadow: 0 2px 8px #0000000b;
+        .customer-reports-container .back-btn:hover {
+            background: #1b2c49;
         }
 
-        .filter-form {
+        .customer-reports-container .report-action:hover {
+            background: #f2f5fa;
+        }
+
+        .customer-reports-container .filter-card {
+            margin-bottom: 25px;
+            padding: 22px;
+            border: 1px solid #e3e8ef;
+            border-radius: 15px;
+            background: #ffffff;
+            box-shadow: 0 8px 28px rgba(16, 29, 53, 0.06);
+        }
+
+        .customer-reports-container .date-filter-form {
             display: flex;
             align-items: end;
             flex-wrap: wrap;
             gap: 14px;
+            margin: 0;
         }
 
-        .date-field {
+        .customer-reports-container .date-field {
             display: flex;
             flex-direction: column;
-            gap: 7px;
+            gap: 8px;
+            min-width: 190px;
         }
 
-        .date-field label {
+        .customer-reports-container .date-field label {
+            color: #263247;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 700;
         }
 
-        .date-field input {
-            padding: 10px;
-            border: 1px solid #ccd4da;
-            border-radius: 5px;
+        .customer-reports-container .date-field input {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #d5deea;
+            border-radius: 9px;
+            background: #ffffff;
+            color: #263247;
+            font: inherit;
+            box-sizing: border-box;
         }
 
-        .summary-grid {
+        .customer-reports-container .date-field input:focus {
+            outline: none;
+            border-color: #3478f6;
+            box-shadow: 0 0 0 3px rgba(52, 120, 246, 0.12);
+        }
+
+        .customer-reports-container .apply-btn {
+            min-height: 44px;
+            padding: 11px 19px;
+            border: 1px solid #101d35;
+            border-radius: 9px;
+            background: #101d35;
+            color: #ffffff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .customer-reports-container .apply-btn:hover {
+            background: #1b2c49;
+        }
+
+        .customer-reports-container .reset-btn {
+            background: #f0f2f5;
+            border-color: #f0f2f5;
+        }
+
+        .customer-reports-container .csv-btn {
+            border-color: #16845b;
+            background: #16845b;
+            color: #ffffff;
+        }
+
+        .customer-reports-container .csv-btn:hover {
+            background: #116b49;
+        }
+
+        .customer-reports-container .customer-summary-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 22px;
+            gap: 20px;
+            margin-bottom: 26px;
         }
 
-        .summary-card {
-            margin-bottom: 0;
-            border-left: 5px solid #1769aa;
+        .customer-reports-container .customer-summary-card {
+            min-width: 0;
+            padding: 24px;
+            border: 1px solid #e3e8ef;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 8px 28px rgba(16, 29, 53, 0.06);
         }
 
-        .summary-card p {
-            margin: 0 0 12px;
-            color: #687782;
+        .customer-reports-container .customer-summary-card p {
+            margin: 0 0 13px;
+            color: #68758a;
+            font-size: 15px;
+            font-weight: 600;
         }
 
-        .summary-card strong {
-            font-size: 28px;
+        .customer-reports-container .customer-summary-card strong {
+            display: block;
+            color: #101d35;
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
         }
 
-        .report-section h2 {
-            margin-top: 0;
+        .customer-reports-container .report-section {
+            margin-bottom: 25px;
+            padding: 24px;
+            border: 1px solid #e3e8ef;
+            border-radius: 15px;
+            background: #ffffff;
+            box-shadow: 0 8px 28px rgba(16, 29, 53, 0.06);
+        }
+
+        .customer-reports-container .report-section h2 {
+            margin: 0 0 20px;
+            color: #101d35;
             font-size: 20px;
+            font-weight: 800;
         }
 
-        .table-wrap {
+        .customer-reports-container .table-wrap {
+            width: 100%;
             overflow-x: auto;
+            border: 1px solid #e3e8ef;
+            border-radius: 10px;
         }
 
-        table {
+        .customer-reports-container table {
             width: 100%;
             min-width: 650px;
             border-collapse: collapse;
+            background: #ffffff;
         }
 
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid #e9edf0;
+        .customer-reports-container th,
+        .customer-reports-container td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e9edf3;
             text-align: left;
+            vertical-align: middle;
+            font-size: 14px;
         }
 
-        th {
-            background: #f6f8fa;
+        .customer-reports-container th {
+            background: #f2f5fa;
+            color: #263247;
+            font-weight: 800;
+            white-space: nowrap;
         }
 
-        .error {
+        .customer-reports-container tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .customer-reports-container tbody tr:hover {
+            background: #f8faff;
+        }
+
+        .customer-reports-container .count {
+            color: #101d35;
+            font-weight: 800;
+        }
+
+        .customer-reports-container .error {
+            margin-bottom: 22px;
+            padding: 14px 17px;
+            border: 1px solid #f5c2c0;
+            border-radius: 10px;
             background: #fde8e7;
             color: #a12622;
-            border: 1px solid #f5c2c0;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            font-weight: 700;
         }
 
-        .empty {
-            color: #687782;
-            padding: 14px;
-            background: #f7f9fb;
-            border-radius: 6px;
+        .customer-reports-container .empty {
+            margin: 0;
+            padding: 18px;
+            border-radius: 9px;
+            background: #f5f7fb;
+            color: #68758a;
         }
 
-        @media (max-width: 850px) {
-            .summary-grid {
+        @media (max-width: 1000px) {
+            .customer-reports-container .customer-summary-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        @media (max-width: 520px) {
-            body {
-                padding: 14px;
-            }
-
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filter-form,
-            .summary-card,
-            .report-section {
+        @media (max-width: 600px) {
+            .customer-reports-container {
                 padding: 15px;
             }
 
-            .date-field,
-            .date-field input {
+            .customer-reports-container .reports-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .customer-reports-container .reports-header h1 {
+                font-size: 25px;
+            }
+
+            .customer-reports-container .customer-summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .customer-reports-container .customer-summary-card,
+            .customer-reports-container .report-section,
+            .customer-reports-container .filter-card {
+                padding: 17px;
+            }
+
+            .customer-reports-container .date-field {
                 width: 100%;
+                min-width: 0;
+            }
+
+            .customer-reports-container .apply-btn,
+            .customer-reports-container .report-action {
+                width: 100%;
+                box-sizing: border-box;
             }
         }
     </style>
 </head>
 
-<body>
+<body class="admin-page">
 
-<div class="page-header">
-    <div>
-        <h1>Customer Reports</h1>
-        <p class="subtitle">
-            Customer totals and lead conversion overview.
-        </p>
+<div class="customer-reports-container">
+
+    <div class="reports-header">
+        <div>
+            <h1>Customer Reports</h1>
+            <p class="subtitle">
+                Customer totals and lead conversion overview.
+            </p>
+        </div>
+
+        <a href="dashboard.php" class="back-btn">
+            ← Back to Dashboard
+        </a>
     </div>
 
-    <a href="dashboard.php" class="button">Back to Dashboard</a>
-</div>
+    <div class="filter-card">
+        <form method="GET"
+              action="customer-reports.php"
+              class="date-filter-form">
 
-<form method="GET" action="customer-reports.php" class="filter-form">
-    <div class="date-field">
-        <label for="start_date">Start Date</label>
-        <input
-            type="date"
-            id="start_date"
-            name="start_date"
-            value="<?php echo htmlspecialchars($start_date); ?>"
-        >
+            <div class="date-field">
+                <label for="start_date">Start Date</label>
+                <input
+                    type="date"
+                    id="start_date"
+                    name="start_date"
+                    value="<?php echo htmlspecialchars($start_date); ?>"
+                >
+            </div>
+
+            <div class="date-field">
+                <label for="end_date">End Date</label>
+                <input
+                    type="date"
+                    id="end_date"
+                    name="end_date"
+                    value="<?php echo htmlspecialchars($end_date); ?>"
+                >
+            </div>
+
+            <button type="submit" class="apply-btn">
+                Apply Filter
+            </button>
+
+            <a href="customer-reports.php"
+               class="report-action reset-btn">
+                Reset
+            </a>
+
+            <a
+                class="report-action csv-btn"
+                href="customer-reports.php?<?php
+                    echo htmlspecialchars(
+                        http_build_query([
+                            'start_date' => $start_date,
+                            'end_date' => $end_date,
+                            'export' => 'csv'
+                        ]),
+                        ENT_QUOTES,
+                        'UTF-8'
+                    );
+                ?>"
+            >
+                Export Customers CSV
+            </a>
+        </form>
     </div>
 
-    <div class="date-field">
-        <label for="end_date">End Date</label>
-        <input
-            type="date"
-            id="end_date"
-            name="end_date"
-            value="<?php echo htmlspecialchars($end_date); ?>"
-        >
+    <?php if ($date_error !== ''): ?>
+        <div class="error">
+            <?php echo htmlspecialchars($date_error); ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="customer-summary-grid">
+
+        <div class="customer-summary-card">
+            <p>Total Customers</p>
+            <strong><?php echo $totalCustomers; ?></strong>
+        </div>
+
+        <div class="customer-summary-card">
+            <p>Total Leads</p>
+            <strong><?php echo $totalLeads; ?></strong>
+        </div>
+
+        <div class="customer-summary-card">
+            <p>Converted Leads</p>
+            <strong><?php echo $convertedLeads; ?></strong>
+        </div>
+
+        <div class="customer-summary-card">
+            <p>Not Converted Leads</p>
+            <strong><?php echo $notConvertedLeads; ?></strong>
+        </div>
+
     </div>
 
-    <button type="submit" class="button primary">Apply Filter</button>
+    <section class="report-section">
+        <h2>Lead Conversion Summary</h2>
 
-    <a href="customer-reports.php" class="button">Reset</a>
-
-    <a
-        class="button"
-        href="customer-reports.php?start_date=<?php echo urlencode($start_date); ?>&amp;end_date=<?php echo urlencode($end_date); ?>&amp;export=csv"
-    >Export Customers CSV</a>
-</form>
-
-<?php if ($date_error !== ''): ?>
-    <div class="error">
-        <?php echo htmlspecialchars($date_error); ?>
-    </div>
-<?php endif; ?>
-
-<div class="summary-grid">
-    <div class="summary-card">
-        <p>Total Customers</p>
-        <strong><?php echo $totalCustomers; ?></strong>
-    </div>
-
-    <div class="summary-card">
-        <p>Total Leads</p>
-        <strong><?php echo $totalLeads; ?></strong>
-    </div>
-
-    <div class="summary-card">
-        <p>Converted Leads</p>
-        <strong><?php echo $convertedLeads; ?></strong>
-    </div>
-
-    <div class="summary-card">
-        <p>Not Converted Leads</p>
-        <strong><?php echo $notConvertedLeads; ?></strong>
-    </div>
-</div>
-
-<section class="report-section">
-    <h2>Lead Conversion Summary</h2>
-
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Total Leads</td>
-                    <td><?php echo $totalLeads; ?></td>
-                </tr>
-                <tr>
-                    <td>Converted Leads</td>
-                    <td><?php echo $convertedLeads; ?></td>
-                </tr>
-                <tr>
-                    <td>Not Converted Leads</td>
-                    <td><?php echo $notConvertedLeads; ?></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<section class="report-section">
-    <h2>Customer List</h2>
-
-    <?php if (empty($customerRows)): ?>
-        <p class="empty">No customers found for the selected dates.</p>
-    <?php else: ?>
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>Email</th>
-                        <th>City</th>
-                        <th>State</th>
-                        <th>Created At</th>
+                        <th>Category</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    <?php foreach ($customerRows as $customer): ?>
-                        <tr>
-                            <td><?php echo (int)$customer['id']; ?></td>
-                            <td><?php echo htmlspecialchars($customer['name']); ?></td>
-                            <td><?php echo htmlspecialchars($customer['mobile']); ?></td>
-                            <td><?php echo htmlspecialchars($customer['email'] ?? ''); ?></td>
-                            <td><?php echo htmlspecialchars($customer['city'] ?? ''); ?></td>
-                            <td><?php echo htmlspecialchars($customer['state'] ?? ''); ?></td>
-                            <td><?php echo htmlspecialchars($customer['created_at']); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
+                    <tr>
+                        <td>Total Leads</td>
+                        <td class="count"><?php echo $totalLeads; ?></td>
+                    </tr>
+
+                    <tr>
+                        <td>Converted Leads</td>
+                        <td class="count"><?php echo $convertedLeads; ?></td>
+                    </tr>
+
+                    <tr>
+                        <td>Not Converted Leads</td>
+                        <td class="count"><?php echo $notConvertedLeads; ?></td>
+                    </tr>
                 </tbody>
             </table>
         </div>
-    <?php endif; ?>
-</section>
+    </section>
+
+    <section class="report-section">
+        <h2>Customer List</h2>
+
+        <?php if (empty($customerRows)): ?>
+
+            <p class="empty">
+                No customers found for the selected dates.
+            </p>
+
+        <?php else: ?>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Mobile</th>
+                            <th>Email</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <?php foreach ($customerRows as $customer): ?>
+                            <tr>
+                                <td>
+                                    <?php echo (int)$customer['id']; ?>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    echo htmlspecialchars($customer['name'] ?? '');
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    echo htmlspecialchars($customer['mobile'] ?? '');
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    echo htmlspecialchars($customer['email'] ?? '');
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    echo htmlspecialchars($customer['city'] ?? '');
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    echo htmlspecialchars($customer['state'] ?? '');
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    echo htmlspecialchars($customer['created_at'] ?? '');
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php endif; ?>
+    </section>
+
+</div>
 
 </body>
 </html>
