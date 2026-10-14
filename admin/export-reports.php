@@ -11,7 +11,7 @@ require_once "../config/database.php";
 
 // Read date filters
 $start_date = trim($_GET['start_date'] ?? '');
-$end_date = trim($_GET['end_date'] ?? '');
+$end_date   = trim($_GET['end_date'] ?? '');
 
 // Validate date format and real calendar dates
 function isValidDate($date)
@@ -70,19 +70,57 @@ $sql .= " ORDER BY l.created_at DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 
+// Prevent spreadsheet formula injection in text fields
+function safeCsvValue($value)
+{
+    if ($value === null) {
+        return '';
+    }
+
+    $value = (string)$value;
+
+    if (preg_match('/^[\s]*[=+\-@]/u', $value)) {
+        return "'" . $value;
+    }
+
+    return $value;
+}
+
 // Prepare CSV download
 $filename = "lead_report_" . date('Y-m-d_H-i-s') . ".csv";
 
 header('Content-Type: text/csv; charset=UTF-8');
-header('Content-Disposition: attachment; filename="' . $filename . '"');
+header(
+    'Content-Disposition: attachment; filename="' . $filename . '"'
+);
+header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
 $output = fopen('php://output', 'w');
 
-// UTF-8 BOM helps Excel display text correctly
+// UTF-8 BOM for Excel compatibility
 fwrite($output, "\xEF\xBB\xBF");
 
+// Report title
+fputcsv($output, ['YOURDREAMHOME - LEAD REPORT']);
+
+// Selected date range
+$rangeText = 'All Dates';
+
+if ($start_date !== '' && $end_date !== '') {
+    $rangeText = $start_date . ' to ' . $end_date;
+} elseif ($start_date !== '') {
+    $rangeText = 'From ' . $start_date;
+} elseif ($end_date !== '') {
+    $rangeText = 'Up to ' . $end_date;
+}
+
+fputcsv($output, ['Report Period', $rangeText]);
+fputcsv($output, ['Generated On', date('Y-m-d H:i:s')]);
+fputcsv($output, []);
+
+// Column headings
 fputcsv($output, [
     'Lead ID',
     'Customer Name',
@@ -95,19 +133,27 @@ fputcsv($output, [
     'Created Date'
 ]);
 
+$totalLeads = 0;
+
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     fputcsv($output, [
         $row['lead_id'],
-        $row['customer_name'],
-        $row['mobile'],
-        $row['email'],
-        $row['service_name'],
-        $row['source_name'],
-        $row['requirement'],
-        $row['status'],
+        safeCsvValue($row['customer_name']),
+        safeCsvValue($row['mobile']),
+        safeCsvValue($row['email']),
+        safeCsvValue($row['service_name']),
+        safeCsvValue($row['source_name']),
+        safeCsvValue($row['requirement']),
+        safeCsvValue($row['status']),
         $row['created_at']
     ]);
+
+    $totalLeads++;
 }
+
+// Report total
+fputcsv($output, []);
+fputcsv($output, ['Total Leads', $totalLeads]);
 
 fclose($output);
 exit;

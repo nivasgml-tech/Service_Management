@@ -379,6 +379,17 @@ function renderChart($title, $rows, $labelKey, $emptyMessage)
 
     
 <a
+    href="export-excel-reports.php?start_date=<?php
+        echo urlencode($start_date);
+    ?>&amp;end_date=<?php echo urlencode($end_date); ?>"
+    class="reset-filter"
+>
+    Export Excel
+</a>
+
+
+    
+<a
     href="export-summary-reports.php?start_date=<?php echo urlencode($start_date); ?>&amp;end_date=<?php echo urlencode($end_date); ?>"
     class="reset-filter"
 >
